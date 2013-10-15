@@ -1,0 +1,35 @@
+{
+	"name": "extended-spine",
+	"description": "Some extensions for spine framework",
+	"version": "1.0.0",
+	"author": {
+		"name": "David Kudera",
+		"email": "sakren@gmail.com"
+	},
+	"keywords": [
+		"spine",
+		"angular",
+		"browser",
+		"controller",
+		"mvc"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git@github.com:sakren/node-extended-spine.git"
+	},
+	"license": "MIT",
+	"engines": {
+		"node": "*"
+	},
+	"dependencies": {
+		"spine": "~1.2.1",
+		"is-mobile": "~0.2.2"
+	},
+	"devDependencies": {
+		"chai": "~1.8.0",
+		"mocha": "~1.13.0"
+	},
+	"scripts": {
+		"test": "cd ./test; mocha-phantomjs ./index.html;"
+	}
+}

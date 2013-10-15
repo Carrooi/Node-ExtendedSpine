@@ -1,0 +1,15 @@
+{
+	"packages": {
+		"test": {
+			"application": "./tests.js",
+			"modules": [
+				"./tests/*.coffee",
+				"../Controller.js",
+				"./app/*.coffee"
+			],
+			"run": [
+				"/tests/Controller"
+			]
+		}
+	}
+}

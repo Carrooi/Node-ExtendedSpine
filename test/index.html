@@ -1,0 +1,37 @@
+<html>
+	<head>
+		<title> Tests </title>
+		<link rel="stylesheet" href="../node_modules/mocha/mocha.css" />
+	</head>
+	<body>
+		<div id="mocha"></div>
+
+		<div id="test" style="display: none;">
+			<div data-controller="/app/controllers/First"></div>
+			<div data-controller="/app/controllers/Second"></div>
+		</div>
+
+		<div id="test2" style="display: none;">
+			<div data-controller="/app/controllers/Third"></div>
+		</div>
+
+		<div id="test3" data-application data-controller="/app/controllers/Application">
+			<div data-controller="/app/controllers/Fourth"></div>
+			<div data-controller="/app/controllers/Fifth"></div>
+		</div>
+
+		<script src="../node_modules/mocha/mocha.js"></script>
+		<script src="../node_modules/chai/chai.js"></script>
+		<script>
+			mocha.ui('bdd');
+			mocha.reporter('html');
+			var expect = chai.expect;
+		</script>
+		<script src="jquery.js"></script>
+		<script src="tests.js"></script>
+		<script>
+			if (window.mochaPhantomJS) { mochaPhantomJS.run(); }
+			else { mocha.run(); }
+		</script>
+	</body>
+</html>
