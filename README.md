@@ -11,6 +11,15 @@ You can use it for example with [SimQ](https://npmjs.org/package/simq).
 $ npm install extended-spine
 ```
 
+## Setup
+
+Before everything, you have to add this one line of code into your javascript.
+
+```
+Controller = require 'extended-spine'
+Controller.init($)
+```
+
 ## Usage
 
 Now only spine controller is extended.
@@ -31,16 +40,9 @@ As you can see, everything is same like in classic spine, only extended class is
 
 ## Creating controllers from data-controller attribute
 
-Before everything, you have to add this one line of code into your javascript.
-
-```
-Controller = require 'extended-spine'
-Controller.init($)
-```
-
-Now base controller has got jQuery object and it will also look for element in your page with `data-application` attribute.
-If it will not find it, whole html page will be used. Every element inside this `data-application` element with `data-controller`
-element will be used for controller. Example is much better for explain.
+This module will automatically look for elements in your page with `data-application` attribute. If it will not find it, whole html page will
+be used. Every element inside this `data-application` element with `data-controller` element will be used for controller.
+Example is much better for explain.
 
 ```
 ...
@@ -93,6 +95,7 @@ $ npm test
 
 * 1.0.1
 	+ Typo in tests
+	+ Better documentation
 
 * 1.0.0
 	+ Initial version
