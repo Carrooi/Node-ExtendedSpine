@@ -158,16 +158,16 @@
 	        scope = '[data-application]:first';
 	      }
 	      Controller.jQuery = jQuery;
-	      Controller.jQuery.fn.hasAttr = function(name) {
+	      jQuery.fn.hasAttr = function(name) {
 	        var attr;
-	        attr = $(this).attr(name);
+	        attr = jQuery(this).attr(name);
 	        return typeof attr !== 'undefined' && attr !== false;
 	      };
-	      Controller.jQuery.fn.getController = function() {
-	        return Controller.jQuery(this).data('controller');
+	      jQuery.fn.getController = function() {
+	        return jQuery(this).data('controller');
 	      };
 	      if (scope !== false) {
-	        return Controller.refresh(scope);
+	        return this.refresh(scope);
 	      }
 	    };
 	
@@ -212,17 +212,18 @@
 	    };
 	
 	    Controller.findElementsWithController = function(scope) {
-	      var result;
+	      var result,
+	        _this = this;
 	      if (scope == null) {
 	        scope = 'html';
 	      }
-	      scope = Controller.jQuery(scope);
+	      scope = this.jQuery(scope);
 	      result = [];
 	      if (scope.hasAttr('data-controller')) {
 	        result.push(scope);
 	      }
 	      scope.find('*[data-controller]').each(function(i, el) {
-	        el = Controller.jQuery(el);
+	        el = _this.jQuery(el);
 	        return result.push(el);
 	      });
 	      return result;
@@ -233,11 +234,11 @@
 	      if (scope == null) {
 	        scope = 'html';
 	      }
-	      _ref = Controller.findElementsWithController(scope);
+	      _ref = this.findElementsWithController(scope);
 	      _results = [];
 	      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
 	        el = _ref[_i];
-	        _results.push(Controller.register(el.attr('data-controller'), el));
+	        _results.push(this.register(el.attr('data-controller'), el));
 	      }
 	      return _results;
 	    };
@@ -247,7 +248,7 @@
 	      if (scope == null) {
 	        scope = 'html';
 	      }
-	      _ref = Controller.findElementsWithController(scope);
+	      _ref = this.findElementsWithController(scope);
 	      _results = [];
 	      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
 	        el = _ref[_i];
@@ -266,7 +267,7 @@
 	        el = null;
 	      }
 	      if (el !== null) {
-	        el = Controller.jQuery(el);
+	        el = this.jQuery(el);
 	      }
 	      computer = el.hasAttr('data-computer');
 	      mobile = el.hasAttr('data-mobile');
@@ -278,7 +279,7 @@
 	          return false;
 	        }
 	      }
-	      return Controller.createController(path, el);
+	      return this.createController(path, el);
 	    };
 	
 	    Controller.createController = function(name, el) {

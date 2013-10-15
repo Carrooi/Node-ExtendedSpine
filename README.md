@@ -93,6 +93,9 @@ $ npm test
 
 ## Changelog
 
+* 1.0.2
+	+ Bug with inheritance
+
 * 1.0.1
 	+ Typo in tests
 	+ Better documentation

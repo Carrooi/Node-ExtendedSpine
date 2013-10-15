@@ -17,12 +17,15 @@ class Controller extends Spine.Controller
 
 	@init: (jQuery, scope = '[data-application]:first') ->
 		Controller.jQuery = jQuery
-		Controller.jQuery.fn.hasAttr = (name) ->
-			attr = $(@).attr(name)
+		
+		jQuery.fn.hasAttr = (name) ->
+			attr = jQuery(@).attr(name)
 			return typeof attr != 'undefined' && attr != false
-		Controller.jQuery.fn.getController = -> return Controller.jQuery(@).data('controller')
+			
+		jQuery.fn.getController = ->
+			return jQuery(@).data('controller')
 
-		if scope != false then Controller.refresh(scope)
+		if scope != false then @refresh(scope)
 
 
 	getAllEvents: ->
@@ -56,12 +59,12 @@ class Controller extends Spine.Controller
 
 
 	@findElementsWithController: (scope = 'html') ->
-		scope = Controller.jQuery(scope)
+		scope = @jQuery(scope)
 		result = []
 		result.push(scope) if scope.hasAttr('data-controller')
 
-		scope.find('*[data-controller]').each( (i, el) ->
-			el = Controller.jQuery(el)
+		scope.find('*[data-controller]').each( (i, el) =>
+			el = @jQuery(el)
 			result.push el
 		)
 
@@ -69,12 +72,12 @@ class Controller extends Spine.Controller
 
 
 	@refresh: (scope = 'html') ->
-		for el in Controller.findElementsWithController(scope)
-			Controller.register(el.attr('data-controller'), el)
+		for el in @findElementsWithController(scope)
+			@register(el.attr('data-controller'), el)
 
 
 	@unbind: (scope = 'html') ->
-		for el in Controller.findElementsWithController(scope)
+		for el in @findElementsWithController(scope)
 			controller = el.data('_controller')
 
 			controller.unbind()
@@ -85,7 +88,7 @@ class Controller extends Spine.Controller
 
 
 	@register: (path, el = null) ->
-		el = Controller.jQuery(el) if el != null
+		el = @jQuery(el) if el != null
 
 		computer = el.hasAttr('data-computer')
 		mobile = el.hasAttr('data-mobile')
@@ -93,7 +96,7 @@ class Controller extends Spine.Controller
 			if computer && isMobile() then return false
 			if mobile && !isMobile() then return false
 
-		return Controller.createController(path, el)
+		return @createController(path, el)
 
 
 	@createController: (name, el) ->
