@@ -93,7 +93,7 @@ $ npm test
 
 ## Changelog
 
-* 1.0.2
+* 1.0.2 - 1.0.3
 	+ Bug with inheritance
 
 * 1.0.1
