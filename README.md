@@ -91,5 +91,8 @@ $ npm test
 
 ## Changelog
 
+* 1.0.1
+	+ Typo in tests
+
 * 1.0.0
 	+ Initial version
