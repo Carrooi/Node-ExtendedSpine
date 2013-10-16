@@ -2,8 +2,16 @@ Spine = require 'spine'
 isMobile = require 'is-mobile'
 
 $ = null
+num = 0
+
+hasAttr = (el, name) ->
+	attr = $(el).attr(name)
+	return typeof attr != 'undefined' && attr != false
 
 class Controller extends Spine.Controller
+
+
+	id: null
 
 
 	constructor: (el = null) ->
@@ -11,15 +19,12 @@ class Controller extends Spine.Controller
 
 		super(@, [])
 
+		@id = @el.attr('id')
 		@el.data('controller', @)
 
 
 	@init: (jQuery, scope = '[data-application]:first') ->
 		$ = jQuery
-
-		$.fn.hasAttr = (name) ->
-			attr = $(@).attr(name)
-			return typeof attr != 'undefined' && attr != false
 			
 		$.fn.getController = ->
 			return $(@).data('controller')
@@ -60,7 +65,7 @@ class Controller extends Spine.Controller
 	@findElementsWithController: (scope = 'html') ->
 		scope = $(scope)
 		result = []
-		result.push(scope) if scope.hasAttr('data-controller')
+		result.push(scope) if hasAttr(scope, 'data-controller')
 
 		scope.find('*[data-controller]').each( (i, el) =>
 			el = $(el)
@@ -89,11 +94,15 @@ class Controller extends Spine.Controller
 	@register: (path, el = null) ->
 		el = $(el) if el != null
 
-		computer = el.hasAttr('data-computer')
-		mobile = el.hasAttr('data-mobile')
+		computer = hasAttr(el, 'data-computer')
+		mobile = hasAttr(el, 'data-mobile')
 		if el != null && (computer || mobile)
 			if computer && isMobile() then return false
 			if mobile && !isMobile() then return false
+
+		if el != null && el.length > 0 && !hasAttr(el, 'id')
+			el.attr('id', '_controller' + num)
+			num++
 
 		return @createController(path, el)
 

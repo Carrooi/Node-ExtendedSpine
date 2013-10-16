@@ -30,6 +30,7 @@ describe 'Controller', ->
 			c = Controller.register('/app/controllers/First', $('#test div:first'))
 			expect(c).to.be.an.instanceof(First)
 			expect(c.el.attr('data-controller')).to.be.equal('/app/controllers/First')
+			expect(c.el.attr('id')).to.have.string('_controller')
 
 		it 'should create controller with constructor for element', ->
 			c = Controller.register('/app/controllers/Second', $('#test div:last'))

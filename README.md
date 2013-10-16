@@ -93,6 +93,10 @@ $ npm test
 
 ## Changelog
 
+* 1.1.0
+	+ Automatically creates html id
+	+ Some optimization
+
 * 1.0.4
 	+ Wrong variable names
 
