@@ -77,13 +77,13 @@ class Controller extends Spine.Controller
 
 	@unbind: (scope = 'html') ->
 		for el in @findElementsWithController(scope)
-			controller = el.data('_controller')
+			controller = el.data('controller')
 
 			controller.unbind()
 			controller.stopListening()
 			controller.unbindUiEvents()
 
-			el.data('_controller', null)
+			el.data('controller', null)
 
 
 	@register: (path, el = null) ->

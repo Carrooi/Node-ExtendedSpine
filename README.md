@@ -93,6 +93,9 @@ $ npm test
 
 ## Changelog
 
+* 1.0.4
+	+ Wrong variable names
+
 * 1.0.2 - 1.0.3
 	+ Bug with inheritance
 
