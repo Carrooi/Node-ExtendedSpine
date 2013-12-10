@@ -64,7 +64,7 @@ If your application uses for example ajax for repainting elements, you can use t
 your controllers.
 
 ```
-Controller = require 'extended-spine'
+Controller = require 'extended-spine/Controller'
 Controller.init($)
 
 el = $('#element-which-will-be-repainted')
@@ -74,6 +74,20 @@ $.get(url, (data) ->
 	el.html(data)
 	Controller.refresh(el)
 )
+```
+
+## Finding controllers
+
+From jQuery element:
+```
+var menu = $('#menu').getController();
+// or
+var menu = $('[data-controller="/app/controller/Menu"]').getController();
+```
+
+Otherwise:
+```
+var menu = Controller.find('/app/controller/Menu');
 ```
 
 ## Mobile/computer specific controllers
@@ -96,6 +110,7 @@ $ npm test
 * 1.2.0
 	+ Tests modules does not need to be installed globally
 	+ Some updates
+	+ Added find method
 
 * 1.1.0
 	+ Automatically creates html id

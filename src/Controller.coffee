@@ -11,6 +11,9 @@ hasAttr = (el, name) ->
 class Controller extends Spine.Controller
 
 
+	@controllers: {}
+
+
 	id: null
 
 
@@ -21,6 +24,9 @@ class Controller extends Spine.Controller
 
 		@id = @el.attr('id')
 		@el.data('controller', @)
+
+		if hasAttr(@el, 'data-controller')
+			Controller.controllers[@el.attr('data-controller')] = @
 
 
 	@init: (jQuery, scope = '[data-application]:first') ->
@@ -109,6 +115,13 @@ class Controller extends Spine.Controller
 
 	@createController: (name, el) ->
 		return new (require(name))(el)
+
+
+	@find: (controller) ->
+		if typeof Controller.controllers[controller] != 'undefined'
+			return Controller.controllers[controller]
+		else
+			return null
 
 
 module.exports = Controller

@@ -54,6 +54,11 @@ describe 'Controller', ->
 				{event: 'click', selector: null, method: 'onClick'}
 			])
 
+	describe '#find()', ->
+		it 'should find controller by its name', ->
+			c = Controller.createController('/test/app/controllers/First', $('#test div:first'))
+			expect(Controller.find('/test/app/controllers/First')).to.be.equal(c)
+
 	describe '#jQuery.getController()', ->
 		it 'should get registered controller from element', ->
 			el = $('#test div:first')
