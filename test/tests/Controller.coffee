@@ -12,7 +12,7 @@ describe 'Controller', ->
 			expect(Controller.findElementsWithController('#test').length).to.be.equal(2)
 
 		it 'should find controllers elements in html', ->
-			expect(Controller.findElementsWithController().length).to.be.equal(6)
+			expect(Controller.findElementsWithController().length).to.be.equal(5)
 
 	describe '#createController()', ->
 		it 'should create controller for element', ->
@@ -41,9 +41,8 @@ describe 'Controller', ->
 		it 'should register all controllers in application div', ->
 			Controller.refresh('[data-application]')
 			expect($('#test3').getController()).to.be.an.instanceof(require('/test/app/controllers/Application'))
-			$('#test3 div').each( (i, el) ->
-				expect($(el).getController()).to.be.an.instanceof(require($(el).attr('data-controller')))
-			)
+			expect($('#test3 div:first').data('controller')).to.be.an.instanceof(require('/test/app/controllers/Fourth'))
+			expect($('#test3 div:last').data('controller')).to.be.equal('/test/app/controllers/Fifth')		# lazy
 
 	describe '#getAllEvents()', ->
 		it 'should return list of parsed events from controller all it\'s parents', ->
@@ -58,6 +57,11 @@ describe 'Controller', ->
 		it 'should find controller by its name', ->
 			c = Controller.createController('/test/app/controllers/First', $('#test div:first'))
 			expect(Controller.find('/test/app/controllers/First')).to.be.equal(c)
+
+		it 'should get factory for lazy controller', ->
+			factory = Controller.find('/test/app/controllers/Lazy')
+			expect(factory).to.be.a('function')
+			expect(factory()).to.be.an.instanceof(require('/test/app/controllers/Lazy'))
 
 	describe '#jQuery.getController()', ->
 		it 'should get registered controller from element', ->

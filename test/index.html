@@ -17,8 +17,10 @@
 
 		<div id="test3" data-application data-controller="/test/app/controllers/Application">
 			<div data-controller="/test/app/controllers/Fourth"></div>
-			<div data-controller="/test/app/controllers/Fifth"></div>
+			<div data-controller="/test/app/controllers/Fifth" data-lazy></div>
 		</div>
+
+		<div id="lazy" data-controller="/test/app/controllers/Lazy" data-lazy></div>
 
 		<script src="../node_modules/mocha/mocha.js"></script>
 		<script src="../node_modules/chai/chai.js"></script>

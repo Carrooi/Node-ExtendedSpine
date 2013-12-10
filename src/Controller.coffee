@@ -11,9 +11,6 @@ hasAttr = (el, name) ->
 class Controller extends Spine.Controller
 
 
-	@controllers: {}
-
-
 	id: null
 
 
@@ -25,15 +22,19 @@ class Controller extends Spine.Controller
 		@id = @el.attr('id')
 		@el.data('controller', @)
 
-		if hasAttr(@el, 'data-controller')
-			Controller.controllers[@el.attr('data-controller')] = @
-
 
 	@init: (jQuery, scope = '[data-application]:first') ->
 		$ = jQuery
+		that = @
 			
 		$.fn.getController = ->
-			return $(@).data('controller')
+			controller = $(@).data('controller')
+
+			if !controller || typeof controller == 'string' && hasAttr($(@), 'data-controller') && hasAttr($(@), 'data-lazy')
+				return =>
+					return that.createController($(@).attr('data-controller'), $(@))
+
+			return controller
 
 		if scope != false then @refresh(scope)
 
@@ -68,12 +69,14 @@ class Controller extends Spine.Controller
 				@el.undelegate(info.selector, info.event)
 
 
-	@findElementsWithController: (scope = 'html') ->
+	@findElementsWithController: (scope = 'html', self = true) ->
 		scope = $(scope)
 		result = []
-		result.push(scope) if hasAttr(scope, 'data-controller')
 
-		scope.find('*[data-controller]').each( (i, el) =>
+		if self && hasAttr(scope, 'data-controller')
+			result.push(scope)
+
+		scope.find('*[data-controller]:not([data-lazy])').each( (i, el) =>
 			el = $(el)
 			result.push el
 		)
@@ -81,13 +84,13 @@ class Controller extends Spine.Controller
 		return result
 
 
-	@refresh: (scope = 'html') ->
-		for el in @findElementsWithController(scope)
+	@refresh: (scope = 'html', self = true) ->
+		for el in @findElementsWithController(scope, self)
 			@register(el.attr('data-controller'), el)
 
 
-	@unbind: (scope = 'html') ->
-		for el in @findElementsWithController(scope)
+	@unbind: (scope = 'html', self = true) ->
+		for el in @findElementsWithController(scope, self)
 			controller = el.data('controller')
 
 			controller.unbind()
@@ -118,10 +121,7 @@ class Controller extends Spine.Controller
 
 
 	@find: (controller) ->
-		if typeof Controller.controllers[controller] != 'undefined'
-			return Controller.controllers[controller]
-		else
-			return null
+		return $('[data-controller="' + controller + '"]').getController()
 
 
 module.exports = Controller

@@ -90,6 +90,20 @@ Otherwise:
 var menu = Controller.find('/app/controller/Menu');
 ```
 
+## Lazy controllers
+If you don't want to instantiate some controller immediately, you can add html attribute `data-lazy` to.
+
+```
+<div data-controller="/path/to/my/controller" data-lazy></div>
+```
+
+Now when you want to create instance of this controller, you have to get it's controller factory and use it.
+
+```
+var factory = Controller.find('/path/to/my/controller');		// for lazy controllers, factory function is returned
+var controller = factory();										// just call it and it will return created controller
+```
+
 ## Mobile/computer specific controllers
 
 You can also set if some of your controllers is only for mobile or only for computers.
@@ -111,6 +125,7 @@ $ npm test
 	+ Tests modules does not need to be installed globally
 	+ Some updates
 	+ Added find method
+	+ Added lazy controller option
 
 * 1.1.0
 	+ Automatically creates html id
