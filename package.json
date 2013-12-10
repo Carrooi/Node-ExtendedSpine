@@ -1,7 +1,7 @@
 {
 	"name": "extended-spine",
 	"description": "Some extensions for spine framework",
-	"version": "1.1.0",
+	"version": "1.2.0",
 	"author": {
 		"name": "David Kudera",
 		"email": "sakren@gmail.com"
@@ -22,14 +22,17 @@
 		"node": "*"
 	},
 	"dependencies": {
-		"spine": "~1.2.1",
-		"is-mobile": "~0.2.2"
+		"spine": "1.2.1",
+		"is-mobile": "0.2.2"
 	},
 	"devDependencies": {
-		"chai": "~1.8.0",
-		"mocha": "~1.13.0"
+		"chai": "1.8.0",
+		"mocha": "1.15.1",
+		"mocha-phantomjs": "3.2.0",
+		"phantomjs": "1.9.2-5"
 	},
 	"scripts": {
-		"test": "cd ./test; mocha-phantomjs ./index.html;"
+		"test": "mocha-phantomjs -p ./node_modules/phantomjs/bin/phantomjs ./test/index.html",
+		"test-build": "cd ./test; simq build;"
 	}
 }

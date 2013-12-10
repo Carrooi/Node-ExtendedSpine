@@ -93,6 +93,10 @@ $ npm test
 
 ## Changelog
 
+* 1.2.0
+	+ Tests modules does not need to be installed globally
+	+ Some updates
+
 * 1.1.0
 	+ Automatically creates html id
 	+ Some optimization

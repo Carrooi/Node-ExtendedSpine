@@ -1,14 +1,18 @@
 {
 	"packages": {
 		"test": {
-			"application": "./tests.js",
+			"base": "../",
+			"target": "./test/application.js",
 			"modules": [
-				"./tests/*.coffee",
-				"../Controller.js",
-				"./app/*.coffee"
+				"./test/tests/*.coffee",
+				"./test/app/*.coffee",
+				"./lib/Controller.js"
 			],
+			"aliases": {
+				"extended-spine/Controller": "/lib/Controller.js"
+			},
 			"run": [
-				"/tests/Controller"
+				"/test/tests/Controller"
 			]
 		}
 	}
