@@ -1,5 +1,6 @@
 [![NPM version](https://badge.fury.io/js/extended-spine.png)](http://badge.fury.io/js/extended-spine)
 [![Dependency Status](https://gemnasium.com/sakren/node-extended-spine.png)](https://gemnasium.com/sakren/node-extended-spine)
+[![Build Status](https://travis-ci.org/sakren/node-extended-spine.png?branch=master)](https://travis-ci.org/sakren/node-extended-spine)
 
 # extended-spine
 
