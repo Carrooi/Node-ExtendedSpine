@@ -607,14 +607,32 @@
 	      return this.cloneArray(this.records);
 	    };
 	
-	    Model.first = function() {
-	      var _ref;
-	      return (_ref = this.records[0]) != null ? _ref.clone() : void 0;
+	    Model.slice = function(begin, end) {
+	      if (begin == null) {
+	        begin = 0;
+	      }
+	      return this.cloneArray(this.records.slice(begin, end));
 	    };
 	
-	    Model.last = function() {
+	    Model.first = function(end) {
 	      var _ref;
-	      return (_ref = this.records[this.records.length - 1]) != null ? _ref.clone() : void 0;
+	      if (end == null) {
+	        end = 1;
+	      }
+	      if (end > 1) {
+	        return this.cloneArray(this.records.slice(0, end));
+	      } else {
+	        return (_ref = this.records[0]) != null ? _ref.clone() : void 0;
+	      }
+	    };
+	
+	    Model.last = function(begin) {
+	      var _ref;
+	      if (typeof begin === 'number') {
+	        return this.cloneArray(this.records.slice(-begin));
+	      } else {
+	        return (_ref = this.records[this.records.length - 1]) != null ? _ref.clone() : void 0;
+	      }
 	    };
 	
 	    Model.count = function() {
@@ -1274,7 +1292,7 @@
 	    module.exports = Spine;
 	  }
 	
-	  Spine.version = '1.2.1';
+	  Spine.version = '1.2.2';
 	
 	  Spine.isArray = isArray;
 	
@@ -2121,11 +2139,11 @@
 			"node": "*"
 		},
 		"dependencies": {
-			"spine": "1.2.1",
+			"spine": "1.2.2",
 			"is-mobile": "0.2.2"
 		},
 		"devDependencies": {
-			"chai": "1.8.0",
+			"chai": "1.8.1",
 			"mocha": "1.15.1",
 			"mocha-phantomjs": "3.2.0",
 			"phantomjs": "1.9.2-5"
@@ -2154,7 +2172,7 @@
 	return {
 	  "name": "spine",
 	  "description": "MVC Framework.",
-	  "version": "1.2.1",
+	  "version": "1.2.2",
 	  "author": {
 	    "name": "maccman"
 	  },
@@ -2199,8 +2217,13 @@
 	  "bugs": {
 	    "url": "https://github.com/spine/spine/issues"
 	  },
-	  "_id": "spine@1.2.1",
-	  "_from": "spine@~1.2.1"
+	  "homepage": "https://github.com/spine/spine",
+	  "_id": "spine@1.2.2",
+	  "dist": {
+	    "shasum": "84cee3e0b70d3be7167f0f7f8f40d9c084e53618"
+	  },
+	  "_from": "spine@1.2.2",
+	  "_resolved": "https://registry.npmjs.org/spine/-/spine-1.2.2.tgz"
 	}
 	
 	}).call(this);
@@ -2270,7 +2293,11 @@
 	    "url": "https://github.com/juliangruber/is-mobile/issues"
 	  },
 	  "_id": "is-mobile@0.2.2",
-	  "_from": "is-mobile@~0.2.2"
+	  "dist": {
+	    "shasum": "ead371f566891f6ff93b9164af2fd27e7a6f6378"
+	  },
+	  "_from": "is-mobile@0.2.2",
+	  "_resolved": "https://registry.npmjs.org/is-mobile/-/is-mobile-0.2.2.tgz"
 	}
 	
 	}).call(this);
@@ -2281,7 +2308,7 @@
 , 'is-mobile': function(exports, module) { module.exports = window.require('is-mobile/index.js'); }
 
 });
-require.__setStats({"spine/index.js":{"atime":1386666447000,"mtime":1386664096000,"ctime":1386664096000},"spine/lib/spine.js":{"atime":1386666447000,"mtime":1386664096000,"ctime":1386664096000},"is-mobile/index.js":{"atime":1386666447000,"mtime":1386664096000,"ctime":1386664096000},"/test/tests/Controller.coffee":{"atime":1386671326000,"mtime":1386671322000,"ctime":1386671322000},"/test/app/controllers/Application.coffee":{"atime":1386666446000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/One.coffee":{"atime":1386666446000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/Three.coffee":{"atime":1386666446000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/Two.coffee":{"atime":1386666446000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Fifth.coffee":{"atime":1386666446000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/First.coffee":{"atime":1386666446000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Fourth.coffee":{"atime":1386666446000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Lazy.coffee":{"atime":1386668497000,"mtime":1386668497000,"ctime":1386668497000},"/test/app/controllers/Second.coffee":{"atime":1386666446000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Third.coffee":{"atime":1386666446000,"mtime":1386664096000,"ctime":1386664096000},"/lib/Controller.js":{"atime":1386670062000,"mtime":1386670058000,"ctime":1386670058000},"/package.json":{"atime":1386666695000,"mtime":1386666679000,"ctime":1386666679000},"spine/package.json":{"atime":1386666447000,"mtime":1386664096000,"ctime":1386664096000},"is-mobile/package.json":{"atime":1386666447000,"mtime":1386664096000,"ctime":1386664096000}});
+require.__setStats({"spine/index.js":{"atime":1386673745000,"mtime":1359672568000,"ctime":1386673706000},"spine/lib/spine.js":{"atime":1386673745000,"mtime":1381848277000,"ctime":1386673706000},"is-mobile/index.js":{"atime":1386672003000,"mtime":1379339940000,"ctime":1386671928000},"/test/tests/Controller.coffee":{"atime":1386671326000,"mtime":1386671322000,"ctime":1386671322000},"/test/app/controllers/Application.coffee":{"atime":1386666446000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/One.coffee":{"atime":1386666446000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/Three.coffee":{"atime":1386666446000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/Two.coffee":{"atime":1386666446000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Fifth.coffee":{"atime":1386666446000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/First.coffee":{"atime":1386666446000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Fourth.coffee":{"atime":1386666446000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Lazy.coffee":{"atime":1386668497000,"mtime":1386668497000,"ctime":1386668497000},"/test/app/controllers/Second.coffee":{"atime":1386666446000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Third.coffee":{"atime":1386666446000,"mtime":1386664096000,"ctime":1386664096000},"/lib/Controller.js":{"atime":1386670062000,"mtime":1386670058000,"ctime":1386670058000},"/package.json":{"atime":1386673692000,"mtime":1386673692000,"ctime":1386673692000},"spine/package.json":{"atime":1386673745000,"mtime":1386673706000,"ctime":1386673706000},"is-mobile/package.json":{"atime":1386672003000,"mtime":1386671928000,"ctime":1386671928000}});
 require.version = '5.5.1';
 
 /** run section **/
