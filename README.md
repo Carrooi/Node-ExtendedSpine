@@ -138,6 +138,7 @@ $ npm test
 	+ Added lazy controller option
 	+ Added lazy option
 	+ Added badges
+	+ Added travis
 
 * 1.1.0
 	+ Automatically creates html id
