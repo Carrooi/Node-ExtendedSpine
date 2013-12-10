@@ -76,18 +76,25 @@ $.get(url, (data) ->
 )
 ```
 
+Methods `unbind` and `refresh` manipulates also with element on which it was called. You can of course disable that.
+
+```
+Controller.unbind(el, false)
+Controller.refresh(el, false)
+```
+
 ## Finding controllers
 
 From jQuery element:
 ```
-var menu = $('#menu').getController();
+menu = $('#menu').getController()
 // or
-var menu = $('[data-controller="/app/controller/Menu"]').getController();
+menu = $('[data-controller="/app/controller/Menu"]').getController()
 ```
 
 Otherwise:
 ```
-var menu = Controller.find('/app/controller/Menu');
+menu = Controller.find('/app/controller/Menu')
 ```
 
 ## Lazy controllers
@@ -100,8 +107,8 @@ If you don't want to instantiate some controller immediately, you can add html a
 Now when you want to create instance of this controller, you have to get it's controller factory and use it.
 
 ```
-var factory = Controller.find('/path/to/my/controller');		// for lazy controllers, factory function is returned
-var controller = factory();										// just call it and it will return created controller
+factory = Controller.find('/path/to/my/controller')		// for lazy controllers, factory function is returned
+controller = factory()									// just call it and it will return created controller
 ```
 
 ## Mobile/computer specific controllers
@@ -126,6 +133,7 @@ $ npm test
 	+ Some updates
 	+ Added find method
 	+ Added lazy controller option
+	+ Added lazy option
 
 * 1.1.0
 	+ Automatically creates html id

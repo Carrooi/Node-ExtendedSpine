@@ -14,6 +14,9 @@ describe 'Controller', ->
 		it 'should find controllers elements in html', ->
 			expect(Controller.findElementsWithController().length).to.be.equal(5)
 
+		it 'should find controllers elements in test element except container', ->
+			expect(Controller.findElementsWithController('#test3', false).length).to.be.equal(1)
+
 	describe '#createController()', ->
 		it 'should create controller for element', ->
 			c = Controller.createController('/test/app/controllers/First', $('#test div:first'))
