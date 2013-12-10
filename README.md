@@ -1,3 +1,6 @@
+[![NPM version](https://badge.fury.io/js/extended-spine.png)](http://badge.fury.io/js/extended-spine)
+[![Dependency Status](https://gemnasium.com/sakren/node-extended-spine.png)](https://gemnasium.com/sakren/node-extended-spine)
+
 # extended-spine
 
 Extended [spine](https://npmjs.org/package/spine) framework. It gives you ability to instantiate controllers almost
@@ -134,6 +137,7 @@ $ npm test
 	+ Added find method
 	+ Added lazy controller option
 	+ Added lazy option
+	+ Added badges
 
 * 1.1.0
 	+ Automatically creates html id
