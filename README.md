@@ -177,6 +177,7 @@ $ npm test
 * 1.3.0
 	+ Refactoring
 	+ Added dependency injection (package [extended-spine-di](https://github.com/sakren/node-extended-spine-di) will be removed)
+	+ Added property fullName into controllers
 
 * 1.2.0
 	+ Tests modules does not need to be installed globally
