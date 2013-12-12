@@ -17,6 +17,8 @@ class Controller extends Spine.Controller
 
 	@DATA_CONTROLLER_NAME: 'data-controller'
 
+	@DATA_CONTROLLER_FULL_NAME: 'data-controller-path'
+
 	@DATA_LAZY_CONTROLLER_NAME: 'data-lazy'
 
 	@DATA_COMPUTER_NAME: 'data-computer'
@@ -31,6 +33,9 @@ class Controller extends Spine.Controller
 	@di: null
 
 
+	@controllers: {}
+
+
 	id: null
 
 	fullName: null
@@ -40,6 +45,9 @@ class Controller extends Spine.Controller
 		if !@el && el instanceof $ then @el = el
 
 		super(@, [])
+
+		if @el && hasAttr(@el, Controller.DATA_CONTROLLER_FULL_NAME)
+			@fullName = @el.attr(Controller.DATA_CONTROLLER_FULL_NAME)
 
 		@id = @el.attr('id')
 		@el.data(Controller.DATA_INSTANCE_NAME, @)
@@ -122,7 +130,7 @@ class Controller extends Spine.Controller
 
 	@refresh: (scope = 'html', self = true) ->
 		for el in Controller.findElementsWithController(scope, self)
-			Controller.register(el.attr(Controller.DATA_CONTROLLER_NAME), el)
+			Controller.createController(el.attr(Controller.DATA_CONTROLLER_NAME), el)
 
 
 	@unbind: (scope = 'html', self = true) ->
@@ -136,7 +144,12 @@ class Controller extends Spine.Controller
 			el.data(Controller.DATA_INSTANCE_NAME, null)
 
 
+	# deprecated
 	@register: (path, el = null) ->
+		return Controller.createController(path, el)
+
+
+	@createController: (name, el = null) ->
 		el = $(el) if el != null
 
 		computer = hasAttr(el, Controller.DATA_COMPUTER_NAME)
@@ -149,19 +162,15 @@ class Controller extends Spine.Controller
 			el.attr('id', Controller.AUTO_ID_PREFIX + num)
 			num++
 
-		return Controller.createController(path, el)
-
-
-	@createController: (name, el) ->
 		name = require.resolve(name)
-		c = require(name)
+		if el != null
+			el.attr(Controller.DATA_CONTROLLER_FULL_NAME, name)
 
+		c = require(name)
 		if Controller.di == null
 			c = new c(el)
 		else
 			c = Controller.di.createInstance(c, [el])
-
-		c.fullName = name
 
 		return c
 

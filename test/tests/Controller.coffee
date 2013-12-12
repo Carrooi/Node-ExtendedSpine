@@ -21,28 +21,30 @@ describe 'Controller', ->
 		it 'should create controller for element', ->
 			c = Controller.createController('/test/app/controllers/First', $('#test div:first'))
 			expect(c).to.be.an.instanceof(First)
-			expect(c.el.attr('data-controller')).to.be.equal('/test/app/controllers/First')
+			expect(c.el.attr(Controller.DATA_CONTROLLER_NAME)).to.be.equal('/test/app/controllers/First')
+			expect(c.el.attr(Controller.DATA_CONTROLLER_FULL_NAME)).to.be.equal('/test/app/controllers/First.coffee')
+			expect(c.fullName).to.be.equal('/test/app/controllers/First.coffee')
 
 		it 'should create controller with constructor for element', ->
 			c = Controller.createController('/test/app/controllers/Second', $('#test div:last'))
 			expect(c).to.be.an.instanceof(Second)
-			expect(c.el.attr('data-controller')).to.be.equal('/test/app/controllers/Second')
+			expect(c.el.attr(Controller.DATA_CONTROLLER_NAME)).to.be.equal('/test/app/controllers/Second')
 
 	describe '#register()', ->
 		it 'should create controller for element', ->
 			c = Controller.register('/test/app/controllers/First', $('#test div:first'))
 			expect(c).to.be.an.instanceof(First)
-			expect(c.el.attr('data-controller')).to.be.equal('/test/app/controllers/First')
+			expect(c.el.attr(Controller.DATA_CONTROLLER_NAME)).to.be.equal('/test/app/controllers/First')
 			expect(c.el.attr('id')).to.have.string('_controller')
 
 		it 'should create controller with constructor for element', ->
 			c = Controller.register('/test/app/controllers/Second', $('#test div:last'))
 			expect(c).to.be.an.instanceof(Second)
-			expect(c.el.attr('data-controller')).to.be.equal('/test/app/controllers/Second')
+			expect(c.el.attr(Controller.DATA_CONTROLLER_NAME)).to.be.equal('/test/app/controllers/Second')
 
 	describe '#refresh()', ->
 		it 'should register all controllers in application div', ->
-			Controller.refresh('[data-application]')
+			Controller.refresh("[#{Controller.DATA_APPLICATION_SCOPE_NAME}]")
 			expect($('#test3').getController()).to.be.an.instanceof(require('/test/app/controllers/Application'))
 			expect($('#test3 div:first').data(Controller.DATA_INSTANCE_NAME)).to.be.an.instanceof(require('/test/app/controllers/Fourth'))
 			expect($('#test3 div:last').data(Controller.DATA_INSTANCE_NAME)).to.not.exists		# lazy
