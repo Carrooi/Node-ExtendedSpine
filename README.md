@@ -132,6 +132,9 @@ $ npm test
 
 ## Changelog
 
+* 1.3.0
+	+ Refactoring
+
 * 1.2.0
 	+ Tests modules does not need to be installed globally
 	+ Some updates

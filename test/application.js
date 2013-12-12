@@ -1460,8 +1460,8 @@
 	      return it('should register all controllers in application div', function() {
 	        Controller.refresh('[data-application]');
 	        expect($('#test3').getController()).to.be.an["instanceof"](require('/test/app/controllers/Application'));
-	        expect($('#test3 div:first').data('controller')).to.be.an["instanceof"](require('/test/app/controllers/Fourth'));
-	        return expect($('#test3 div:last').data('controller')).to.be.equal('/test/app/controllers/Fifth');
+	        expect($('#test3 div:first').data(Controller.DATA_INSTANCE_NAME)).to.be.an["instanceof"](require('/test/app/controllers/Fourth'));
+	        return expect($('#test3 div:last').data(Controller.DATA_INSTANCE_NAME)).to.not.exists;
 	      });
 	    });
 	    describe('#getAllEvents()', function() {
@@ -1924,6 +1924,20 @@
 	  Controller = (function(_super) {
 	    __extends(Controller, _super);
 	
+	    Controller.DATA_APPLICATION_SCOPE_NAME = 'data-application';
+	
+	    Controller.DATA_CONTROLLER_NAME = 'data-controller';
+	
+	    Controller.DATA_LAZY_CONTROLLER_NAME = 'data-lazy';
+	
+	    Controller.DATA_COMPUTER_NAME = 'data-computer';
+	
+	    Controller.DATA_MOBILE_NAME = 'data-mobile';
+	
+	    Controller.DATA_INSTANCE_NAME = '__spine_controller__';
+	
+	    Controller.AUTO_ID_PREFIX = '_controller';
+	
 	    Controller.prototype.id = null;
 	
 	    function Controller(el) {
@@ -1935,23 +1949,21 @@
 	      }
 	      Controller.__super__.constructor.call(this, this, []);
 	      this.id = this.el.attr('id');
-	      this.el.data('controller', this);
+	      this.el.data(Controller.DATA_INSTANCE_NAME, this);
 	    }
 	
 	    Controller.init = function(jQuery, scope) {
-	      var that;
 	      if (scope == null) {
-	        scope = '[data-application]:first';
+	        scope = "[" + Controller.DATA_APPLICATION_SCOPE_NAME + "]:first";
 	      }
 	      $ = jQuery;
-	      that = this;
 	      $.fn.getController = function() {
 	        var controller,
 	          _this = this;
-	        controller = $(this).data('controller');
-	        if (!controller || typeof controller === 'string' && hasAttr($(this), 'data-controller') && hasAttr($(this), 'data-lazy')) {
+	        controller = $(this).data(Controller.DATA_INSTANCE_NAME);
+	        if (!controller || typeof controller === 'string' && hasAttr($(this), Controller.DATA_CONTROLLER_NAME) && hasAttr($(this), Controller.DATA_LAZY_CONTROLLER_NAME)) {
 	          return function() {
-	            return that.createController($(_this).attr('data-controller'), $(_this));
+	            return Controller.createController($(_this).attr(Controller.DATA_CONTROLLER_NAME), $(_this));
 	          };
 	        }
 	        return controller;
@@ -2012,10 +2024,10 @@
 	      }
 	      scope = $(scope);
 	      result = [];
-	      if (self && hasAttr(scope, 'data-controller')) {
+	      if (self && hasAttr(scope, Controller.DATA_CONTROLLER_NAME)) {
 	        result.push(scope);
 	      }
-	      scope.find('*[data-controller]:not([data-lazy])').each(function(i, el) {
+	      scope.find("*[" + Controller.DATA_CONTROLLER_NAME + "]:not([" + Controller.DATA_LAZY_CONTROLLER_NAME + "])").each(function(i, el) {
 	        el = $(el);
 	        return result.push(el);
 	      });
@@ -2030,11 +2042,11 @@
 	      if (self == null) {
 	        self = true;
 	      }
-	      _ref = this.findElementsWithController(scope, self);
+	      _ref = Controller.findElementsWithController(scope, self);
 	      _results = [];
 	      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
 	        el = _ref[_i];
-	        _results.push(this.register(el.attr('data-controller'), el));
+	        _results.push(Controller.register(el.attr(Controller.DATA_CONTROLLER_NAME), el));
 	      }
 	      return _results;
 	    };
@@ -2047,15 +2059,15 @@
 	      if (self == null) {
 	        self = true;
 	      }
-	      _ref = this.findElementsWithController(scope, self);
+	      _ref = Controller.findElementsWithController(scope, self);
 	      _results = [];
 	      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
 	        el = _ref[_i];
-	        controller = el.data('controller');
+	        controller = el.data(Controller.DATA_INSTANCE_NAME);
 	        controller.unbind();
 	        controller.stopListening();
 	        controller.unbindUiEvents();
-	        _results.push(el.data('controller', null));
+	        _results.push(el.data(Controller.DATA_INSTANCE_NAME, null));
 	      }
 	      return _results;
 	    };
@@ -2068,8 +2080,8 @@
 	      if (el !== null) {
 	        el = $(el);
 	      }
-	      computer = hasAttr(el, 'data-computer');
-	      mobile = hasAttr(el, 'data-mobile');
+	      computer = hasAttr(el, Controller.DATA_COMPUTER_NAME);
+	      mobile = hasAttr(el, Controller.DATA_MOBILE_NAME);
 	      if (el !== null && (computer || mobile)) {
 	        if (computer && isMobile()) {
 	          return false;
@@ -2079,10 +2091,10 @@
 	        }
 	      }
 	      if (el !== null && el.length > 0 && !hasAttr(el, 'id')) {
-	        el.attr('id', '_controller' + num);
+	        el.attr('id', Controller.AUTO_ID_PREFIX + num);
 	        num++;
 	      }
-	      return this.createController(path, el);
+	      return Controller.createController(path, el);
 	    };
 	
 	    Controller.createController = function(name, el) {
@@ -2090,7 +2102,7 @@
 	    };
 	
 	    Controller.find = function(controller) {
-	      return $('[data-controller="' + controller + '"]').getController();
+	      return $("[" + Controller.DATA_CONTROLLER_NAME + "=\"" + controller + "\"]").getController();
 	    };
 	
 	    return Controller;
@@ -2149,7 +2161,7 @@
 			"phantomjs": "1.9.2-5"
 		},
 		"scripts": {
-			"test": "mocha-phantomjs -p ./node_modules/phantomjs/bin/phantomjs ./test/index.html",
+			"test": "npm run test-build; mocha-phantomjs -p ./node_modules/phantomjs/bin/phantomjs ./test/index.html",
 			"test-build": "cd ./test; simq build;"
 		}
 	}
@@ -2308,7 +2320,7 @@
 , 'is-mobile': function(exports, module) { module.exports = window.require('is-mobile/index.js'); }
 
 });
-require.__setStats({"spine/index.js":{"atime":1386673745000,"mtime":1359672568000,"ctime":1386673706000},"spine/lib/spine.js":{"atime":1386673745000,"mtime":1381848277000,"ctime":1386673706000},"is-mobile/index.js":{"atime":1386672003000,"mtime":1379339940000,"ctime":1386671928000},"/test/tests/Controller.coffee":{"atime":1386671326000,"mtime":1386671322000,"ctime":1386671322000},"/test/app/controllers/Application.coffee":{"atime":1386666446000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/One.coffee":{"atime":1386666446000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/Three.coffee":{"atime":1386666446000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/Two.coffee":{"atime":1386666446000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Fifth.coffee":{"atime":1386666446000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/First.coffee":{"atime":1386666446000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Fourth.coffee":{"atime":1386666446000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Lazy.coffee":{"atime":1386668497000,"mtime":1386668497000,"ctime":1386668497000},"/test/app/controllers/Second.coffee":{"atime":1386666446000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Third.coffee":{"atime":1386666446000,"mtime":1386664096000,"ctime":1386664096000},"/lib/Controller.js":{"atime":1386670062000,"mtime":1386670058000,"ctime":1386670058000},"/package.json":{"atime":1386673692000,"mtime":1386673692000,"ctime":1386673692000},"spine/package.json":{"atime":1386673745000,"mtime":1386673706000,"ctime":1386673706000},"is-mobile/package.json":{"atime":1386672003000,"mtime":1386671928000,"ctime":1386671928000}});
+require.__setStats({"spine/index.js":{"atime":1386777306000,"mtime":1359672568000,"ctime":1386673706000},"spine/lib/spine.js":{"atime":1386777306000,"mtime":1381848277000,"ctime":1386673706000},"is-mobile/index.js":{"atime":1386777306000,"mtime":1379339940000,"ctime":1386671928000},"/test/tests/Controller.coffee":{"atime":1386834419000,"mtime":1386834414000,"ctime":1386834414000},"/test/app/controllers/Application.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/One.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/Three.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/Two.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Fifth.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/First.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Fourth.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Lazy.coffee":{"atime":1386777221000,"mtime":1386668497000,"ctime":1386668497000},"/test/app/controllers/Second.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Third.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/lib/Controller.js":{"atime":1386833927000,"mtime":1386833910000,"ctime":1386833910000},"/package.json":{"atime":1386833964000,"mtime":1386833962000,"ctime":1386833962000},"spine/package.json":{"atime":1386777306000,"mtime":1386673706000,"ctime":1386673706000},"is-mobile/package.json":{"atime":1386777306000,"mtime":1386671928000,"ctime":1386671928000}});
 require.version = '5.5.1';
 
 /** run section **/

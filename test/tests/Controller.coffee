@@ -44,8 +44,8 @@ describe 'Controller', ->
 		it 'should register all controllers in application div', ->
 			Controller.refresh('[data-application]')
 			expect($('#test3').getController()).to.be.an.instanceof(require('/test/app/controllers/Application'))
-			expect($('#test3 div:first').data('controller')).to.be.an.instanceof(require('/test/app/controllers/Fourth'))
-			expect($('#test3 div:last').data('controller')).to.be.equal('/test/app/controllers/Fifth')		# lazy
+			expect($('#test3 div:first').data(Controller.DATA_INSTANCE_NAME)).to.be.an.instanceof(require('/test/app/controllers/Fourth'))
+			expect($('#test3 div:last').data(Controller.DATA_INSTANCE_NAME)).to.not.exists		# lazy
 
 	describe '#getAllEvents()', ->
 		it 'should return list of parsed events from controller all it\'s parents', ->

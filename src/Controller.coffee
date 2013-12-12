@@ -11,6 +11,22 @@ hasAttr = (el, name) ->
 class Controller extends Spine.Controller
 
 
+
+	@DATA_APPLICATION_SCOPE_NAME: 'data-application'
+
+	@DATA_CONTROLLER_NAME: 'data-controller'
+
+	@DATA_LAZY_CONTROLLER_NAME: 'data-lazy'
+
+	@DATA_COMPUTER_NAME: 'data-computer'
+
+	@DATA_MOBILE_NAME: 'data-mobile'
+
+	@DATA_INSTANCE_NAME: '__spine_controller__'
+
+	@AUTO_ID_PREFIX: '_controller'
+
+
 	id: null
 
 
@@ -20,19 +36,18 @@ class Controller extends Spine.Controller
 		super(@, [])
 
 		@id = @el.attr('id')
-		@el.data('controller', @)
+		@el.data(Controller.DATA_INSTANCE_NAME, @)
 
 
-	@init: (jQuery, scope = '[data-application]:first') ->
+	@init: (jQuery, scope = "[#{Controller.DATA_APPLICATION_SCOPE_NAME}]:first") ->
 		$ = jQuery
-		that = @
 			
 		$.fn.getController = ->
-			controller = $(@).data('controller')
+			controller = $(@).data(Controller.DATA_INSTANCE_NAME)
 
-			if !controller || typeof controller == 'string' && hasAttr($(@), 'data-controller') && hasAttr($(@), 'data-lazy')
+			if !controller || typeof controller == 'string' && hasAttr($(@), Controller.DATA_CONTROLLER_NAME) && hasAttr($(@), Controller.DATA_LAZY_CONTROLLER_NAME)
 				return =>
-					return that.createController($(@).attr('data-controller'), $(@))
+					return Controller.createController($(@).attr(Controller.DATA_CONTROLLER_NAME), $(@))
 
 			return controller
 
@@ -73,10 +88,10 @@ class Controller extends Spine.Controller
 		scope = $(scope)
 		result = []
 
-		if self && hasAttr(scope, 'data-controller')
+		if self && hasAttr(scope, Controller.DATA_CONTROLLER_NAME)
 			result.push(scope)
 
-		scope.find('*[data-controller]:not([data-lazy])').each( (i, el) =>
+		scope.find("*[#{Controller.DATA_CONTROLLER_NAME}]:not([#{Controller.DATA_LAZY_CONTROLLER_NAME}])").each( (i, el) =>
 			el = $(el)
 			result.push el
 		)
@@ -85,35 +100,35 @@ class Controller extends Spine.Controller
 
 
 	@refresh: (scope = 'html', self = true) ->
-		for el in @findElementsWithController(scope, self)
-			@register(el.attr('data-controller'), el)
+		for el in Controller.findElementsWithController(scope, self)
+			Controller.register(el.attr(Controller.DATA_CONTROLLER_NAME), el)
 
 
 	@unbind: (scope = 'html', self = true) ->
-		for el in @findElementsWithController(scope, self)
-			controller = el.data('controller')
+		for el in Controller.findElementsWithController(scope, self)
+			controller = el.data(Controller.DATA_INSTANCE_NAME)
 
 			controller.unbind()
 			controller.stopListening()
 			controller.unbindUiEvents()
 
-			el.data('controller', null)
+			el.data(Controller.DATA_INSTANCE_NAME, null)
 
 
 	@register: (path, el = null) ->
 		el = $(el) if el != null
 
-		computer = hasAttr(el, 'data-computer')
-		mobile = hasAttr(el, 'data-mobile')
+		computer = hasAttr(el, Controller.DATA_COMPUTER_NAME)
+		mobile = hasAttr(el, Controller.DATA_MOBILE_NAME)
 		if el != null && (computer || mobile)
 			if computer && isMobile() then return false
 			if mobile && !isMobile() then return false
 
 		if el != null && el.length > 0 && !hasAttr(el, 'id')
-			el.attr('id', '_controller' + num)
+			el.attr('id', Controller.AUTO_ID_PREFIX + num)
 			num++
 
-		return @createController(path, el)
+		return Controller.createController(path, el)
 
 
 	@createController: (name, el) ->
@@ -121,7 +136,7 @@ class Controller extends Spine.Controller
 
 
 	@find: (controller) ->
-		return $('[data-controller="' + controller + '"]').getController()
+		return $("[#{Controller.DATA_CONTROLLER_NAME}=\"#{controller}\"]").getController()
 
 
 module.exports = Controller
