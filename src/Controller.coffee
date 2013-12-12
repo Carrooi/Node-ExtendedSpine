@@ -25,7 +25,7 @@ class Controller extends Spine.Controller
 
 	@DATA_INSTANCE_NAME: '__spine_controller__'
 
-	@AUTO_ID_PREFIX: '_controller'
+	@AUTO_ID_PREFIX: '_spine_controller'
 
 
 	@di: null
