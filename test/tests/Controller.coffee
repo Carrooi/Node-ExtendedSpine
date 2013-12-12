@@ -35,15 +35,14 @@ describe 'Controller', ->
 			expect(c).to.be.an.instanceof(Second)
 			expect(c.el.attr(Controller.DATA_CONTROLLER_NAME)).to.be.equal('/test/app/controllers/Second')
 
-	describe '#register()', ->
 		it 'should create controller for element', ->
-			c = Controller.register('/test/app/controllers/First', $('#test div:first'))
+			c = Controller.createController('/test/app/controllers/First', $('#test div:first'))
 			expect(c).to.be.an.instanceof(First)
 			expect(c.el.attr(Controller.DATA_CONTROLLER_NAME)).to.be.equal('/test/app/controllers/First')
 			expect(c.el.attr('id')).to.have.string('_controller')
 
 		it 'should create controller with constructor for element', ->
-			c = Controller.register('/test/app/controllers/Second', $('#test div:last'))
+			c = Controller.createController('/test/app/controllers/Second', $('#test div:last'))
 			expect(c).to.be.an.instanceof(Second)
 			expect(c.el.attr(Controller.DATA_CONTROLLER_NAME)).to.be.equal('/test/app/controllers/Second')
 
@@ -76,5 +75,5 @@ describe 'Controller', ->
 	describe '#jQuery.getController()', ->
 		it 'should get registered controller from element', ->
 			el = $('#test div:first')
-			Controller.register('/test/app/controllers/First', el)
+			Controller.createController('/test/app/controllers/First', el)
 			expect(el.getController()).to.be.an.instanceof(First)
