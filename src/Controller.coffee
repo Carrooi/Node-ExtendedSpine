@@ -1,5 +1,6 @@
 Spine = require 'spine'
 isMobile = require 'is-mobile'
+DI = require 'dependency-injection'
 
 $ = null
 num = 0
@@ -27,6 +28,9 @@ class Controller extends Spine.Controller
 	@AUTO_ID_PREFIX: '_controller'
 
 
+	@di: null
+
+
 	id: null
 
 
@@ -39,8 +43,23 @@ class Controller extends Spine.Controller
 		@el.data(Controller.DATA_INSTANCE_NAME, @)
 
 
-	@init: (jQuery, scope = "[#{Controller.DATA_APPLICATION_SCOPE_NAME}]:first") ->
+	@init: (jQuery, args...) ->
 		$ = jQuery
+
+		defaultScope = "[#{Controller.DATA_APPLICATION_SCOPE_NAME}]:first"
+		defaultDi = null
+
+		if args[0] instanceof DI
+			di = args[0]
+			scope = defaultScope
+		else if typeof args[0] in ['string', 'boolean']
+			di = if typeof args[1] == 'undefined' then defaultDi else args[1]
+			scope = args[0]
+
+		if di != null && di !instanceof DI
+			throw new Error 'di container must be an instance of dependency-injection class.'
+
+		Controller.di = di
 			
 		$.fn.getController = ->
 			controller = $(@).data(Controller.DATA_INSTANCE_NAME)
@@ -132,7 +151,11 @@ class Controller extends Spine.Controller
 
 
 	@createController: (name, el) ->
-		return new (require(name))(el)
+		if Controller.di == null
+			return new (require(name))(el)
+		else
+			controller = require(name)
+			return Controller.di.createInstance(controller, [el])
 
 
 	@find: (controller) ->

@@ -4,7 +4,7 @@
 
 # extended-spine
 
-Extended [spine](https://npmjs.org/package/spine) framework. It gives you ability to instantiate controllers almost
+Extended [spine](https://npmjs.org/package/spine) framework. It gives you ability to work with controllers almost
 like in [Angular](http://angularjs.org/).
 
 You can use it for example with [SimQ](https://npmjs.org/package/simq).
@@ -61,6 +61,48 @@ Example is much better for explain.
 Text in `data-controller` attribute is path used in require method.
 
 This means that now you don't have to instantiate controllers on your own. :-)
+
+## Using dependency-injection
+
+If you like [dependency injection](http://en.wikipedia.org/wiki/Dependency_injection) pattern with autowired dependencies
+(again for example like in angular), you can use this feature also with this module.
+
+Using [dependency-injection](https://github.com/sakren/node-dependency-injection) module.
+
+```
+DI = require 'dependency-injection'
+di = new DI
+
+Controller.init($, di)
+```
+
+Some controller:
+```
+Controller = require 'extended-spine/Controller'
+
+class Chat extends Controller
+
+
+	http: null
+
+	jquery: null
+
+	model: null
+
+
+	constructor: (@el, @http, @jquery, @model) ->
+
+
+module.exports = Chat
+```
+
+Chat module is dependent on three services. First argument will always be the container element and others will be services
+from DI container.
+
+Check [documentation](https://github.com/sakren/node-dependency-injection/blob/master/README.md) of dependency-injection
+module to see how to add services into your DI container.
+
+This works only with controllers which were created with data-controller attribute.
 
 ## Refreshing elements
 
@@ -134,6 +176,7 @@ $ npm test
 
 * 1.3.0
 	+ Refactoring
+	+ Added dependency injection (package [extended-spine-di](https://github.com/sakren/node-extended-spine-di) will be removed)
 
 * 1.2.0
 	+ Tests modules does not need to be installed globally
