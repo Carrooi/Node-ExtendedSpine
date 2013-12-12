@@ -67,7 +67,7 @@ This means that now you don't have to instantiate controllers on your own. :-)
 If you like [dependency injection](http://en.wikipedia.org/wiki/Dependency_injection) pattern with autowired dependencies
 (again for example like in angular), you can use this feature also with this module.
 
-Using [dependency-injection](https://github.com/sakren/node-dependency-injection) module.
+Uses [dependency-injection](https://github.com/sakren/node-dependency-injection) module.
 
 ```
 DI = require 'dependency-injection'
