@@ -73,15 +73,9 @@ class Controller extends Spine.Controller
 			throw new Error 'di container must be an instance of dependency-injection class.'
 
 		Controller.di = di
-			
+
 		$.fn.getController = ->
-			controller = $(@).data(Controller.DATA_INSTANCE_NAME)
-
-			if !controller || typeof controller == 'string' && hasAttr($(@), Controller.DATA_CONTROLLER_NAME) && hasAttr($(@), Controller.DATA_LAZY_CONTROLLER_NAME)
-				return =>
-					return Controller.createController($(@).attr(Controller.DATA_CONTROLLER_NAME), $(@))
-
-			return controller
+			return Controller.find($(@))
 
 		if scope != false then @refresh(scope)
 
@@ -123,9 +117,22 @@ class Controller extends Spine.Controller
 		if self && hasAttr(scope, Controller.DATA_CONTROLLER_NAME)
 			result.push(scope)
 
-		scope.find("*[#{Controller.DATA_CONTROLLER_NAME}]:not([#{Controller.DATA_LAZY_CONTROLLER_NAME}])").each( (i, el) =>
-			el = $(el)
-			result.push el
+		scope.find("*[#{Controller.DATA_CONTROLLER_NAME}]:not([#{Controller.DATA_LAZY_CONTROLLER_NAME}])").each( (i, el) ->
+			result.push($(el))
+		)
+
+		return result
+
+
+	@findElementsWithLazyController: (scope = 'html', self = true) ->
+		scope = $(scope)
+		result = []
+
+		if self && hasAttr(scope, Controller.DATA_LAZY_CONTROLLER_NAME)
+			result.push(scope)
+
+		scope.find("*[#{Controller.DATA_CONTROLLER_NAME}][#{Controller.DATA_LAZY_CONTROLLER_NAME}]").each( (i, el) ->
+			result.push($(el))
 		)
 
 		return result
@@ -134,6 +141,9 @@ class Controller extends Spine.Controller
 	@refresh: (scope = 'html', self = true) ->
 		for el in Controller.findElementsWithController(scope, self)
 			Controller.createController(el.attr(Controller.DATA_CONTROLLER_NAME), el)
+
+		for el in Controller.findElementsWithLazyController(scope, self)
+			el.data(Controller.DATA_CONTROLLER_FULL_NAME, require.resolve(el.attr(Controller.DATA_COMPUTER_NAME)))
 
 
 	@unbind: (scope = 'html', self = true) ->
@@ -176,16 +186,58 @@ class Controller extends Spine.Controller
 			c = Controller.di.createInstance(c, [el])
 
 		if typeof Controller.controllers[name] != 'undefined'
-			Controller.controllers[name] = [Controller.controllers[name]]
+			if Object.prototype.toString.call(Controller.controllers[name]) != '[object Array]'
+				Controller.controllers[name] = [Controller.controllers[name]]
+
 			Controller.controllers[name].push(c)
+
 		else
 			Controller.controllers[name] = c
 
 		return c
 
 
-	@find: (controller) ->
-		return $("[#{Controller.DATA_CONTROLLER_NAME}=\"#{controller}\"]").getController()
+	@find: (nameOrElement) ->
+		if typeof nameOrElement == 'string'
+			name = nameOrElement
+			fullName = require.resolve(name)
+
+			if typeof Controller.controllers[fullName] == 'undefined'
+				el = $("[#{Controller.DATA_CONTROLLER_FULL_NAME}=\"#{fullName}\"][#{Controller.DATA_LAZY_CONTROLLER_NAME}]")
+
+				if el.length == 0
+					el = $("[#{Controller.DATA_CONTROLLER_NAME}=\"#{name}\"][#{Controller.DATA_LAZY_CONTROLLER_NAME}]")
+					if el.length > 0
+						el.attr(Controller.DATA_CONTROLLER_FULL_NAME, fullName)
+
+				if el.length == 0
+					return null
+
+				else if el.length == 1
+					return ->
+						return Controller.createController(fullName, el)
+
+				else
+					result = []
+					el.each( (i, el) ->
+						result.push( ->
+							return Controller.createController(fullName, el)
+						)
+					)
+					return result
+
+			return Controller.controllers[fullName]
+
+		else if nameOrElement instanceof $
+			el = nameOrElement
+
+			controller = el.data(Controller.DATA_INSTANCE_NAME)
+
+			if !controller && hasAttr(el, Controller.DATA_CONTROLLER_NAME) && hasAttr(el, Controller.DATA_LAZY_CONTROLLER_NAME)
+				return =>
+					return Controller.createController(el.attr(Controller.DATA_CONTROLLER_NAME), el)
+
+			return controller
 
 
 module.exports = Controller

@@ -64,8 +64,18 @@ describe 'Controller', ->
 
 	describe '#find()', ->
 		it 'should find controller by its name', ->
+			C = require '/test/app/controllers/First'
+
+			controllers = Controller.find('/test/app/controllers/First')
+			expect(controllers).to.be.an.instanceof(Array)
+			expect(controllers).to.have.length(2)
+			expect(controllers[0]).to.be.an.instanceof(C)
+			expect(controllers[1]).to.be.an.instanceof(C)
+
 			c = Controller.createController('/test/app/controllers/First', $('#test div:first'))
-			expect(Controller.find('/test/app/controllers/First')).to.be.equal(c)
+			controllers = Controller.find('/test/app/controllers/First')
+			expect(controllers).to.have.length(3)
+			expect(controllers[2]).to.be.equal(c)
 
 		it 'should get factory for lazy controller', ->
 			factory = Controller.find('/test/app/controllers/Lazy')

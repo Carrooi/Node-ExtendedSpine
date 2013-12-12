@@ -1913,9 +1913,17 @@
 	    });
 	    describe('#find()', function() {
 	      it('should find controller by its name', function() {
-	        var c;
+	        var C, c, controllers;
+	        C = require('/test/app/controllers/First');
+	        controllers = Controller.find('/test/app/controllers/First');
+	        expect(controllers).to.be.an["instanceof"](Array);
+	        expect(controllers).to.have.length(2);
+	        expect(controllers[0]).to.be.an["instanceof"](C);
+	        expect(controllers[1]).to.be.an["instanceof"](C);
 	        c = Controller.createController('/test/app/controllers/First', $('#test div:first'));
-	        return expect(Controller.find('/test/app/controllers/First')).to.be.equal(c);
+	        controllers = Controller.find('/test/app/controllers/First');
+	        expect(controllers).to.have.length(3);
+	        return expect(controllers[2]).to.be.equal(c);
 	      });
 	      return it('should get factory for lazy controller', function() {
 	        var factory;
@@ -2414,15 +2422,7 @@
 	      }
 	      Controller.di = di;
 	      $.fn.getController = function() {
-	        var controller,
-	          _this = this;
-	        controller = $(this).data(Controller.DATA_INSTANCE_NAME);
-	        if (!controller || typeof controller === 'string' && hasAttr($(this), Controller.DATA_CONTROLLER_NAME) && hasAttr($(this), Controller.DATA_LAZY_CONTROLLER_NAME)) {
-	          return function() {
-	            return Controller.createController($(_this).attr(Controller.DATA_CONTROLLER_NAME), $(_this));
-	          };
-	        }
-	        return controller;
+	        return Controller.find($(this));
 	      };
 	      if (scope !== false) {
 	        return this.refresh(scope);
@@ -2470,8 +2470,7 @@
 	    };
 	
 	    Controller.findElementsWithController = function(scope, self) {
-	      var result,
-	        _this = this;
+	      var result;
 	      if (scope == null) {
 	        scope = 'html';
 	      }
@@ -2484,14 +2483,32 @@
 	        result.push(scope);
 	      }
 	      scope.find("*[" + Controller.DATA_CONTROLLER_NAME + "]:not([" + Controller.DATA_LAZY_CONTROLLER_NAME + "])").each(function(i, el) {
-	        el = $(el);
-	        return result.push(el);
+	        return result.push($(el));
+	      });
+	      return result;
+	    };
+	
+	    Controller.findElementsWithLazyController = function(scope, self) {
+	      var result;
+	      if (scope == null) {
+	        scope = 'html';
+	      }
+	      if (self == null) {
+	        self = true;
+	      }
+	      scope = $(scope);
+	      result = [];
+	      if (self && hasAttr(scope, Controller.DATA_LAZY_CONTROLLER_NAME)) {
+	        result.push(scope);
+	      }
+	      scope.find("*[" + Controller.DATA_CONTROLLER_NAME + "][" + Controller.DATA_LAZY_CONTROLLER_NAME + "]").each(function(i, el) {
+	        return result.push($(el));
 	      });
 	      return result;
 	    };
 	
 	    Controller.refresh = function(scope, self) {
-	      var el, _i, _len, _ref, _results;
+	      var el, _i, _j, _len, _len1, _ref, _ref1, _results;
 	      if (scope == null) {
 	        scope = 'html';
 	      }
@@ -2499,10 +2516,15 @@
 	        self = true;
 	      }
 	      _ref = Controller.findElementsWithController(scope, self);
-	      _results = [];
 	      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
 	        el = _ref[_i];
-	        _results.push(Controller.createController(el.attr(Controller.DATA_CONTROLLER_NAME), el));
+	        Controller.createController(el.attr(Controller.DATA_CONTROLLER_NAME), el);
+	      }
+	      _ref1 = Controller.findElementsWithLazyController(scope, self);
+	      _results = [];
+	      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+	        el = _ref1[_j];
+	        _results.push(el.data(Controller.DATA_CONTROLLER_FULL_NAME, require.resolve(el.attr(Controller.DATA_COMPUTER_NAME))));
 	      }
 	      return _results;
 	    };
@@ -2568,7 +2590,9 @@
 	        c = Controller.di.createInstance(c, [el]);
 	      }
 	      if (typeof Controller.controllers[name] !== 'undefined') {
-	        Controller.controllers[name] = [Controller.controllers[name]];
+	        if (Object.prototype.toString.call(Controller.controllers[name]) !== '[object Array]') {
+	          Controller.controllers[name] = [Controller.controllers[name]];
+	        }
 	        Controller.controllers[name].push(c);
 	      } else {
 	        Controller.controllers[name] = c;
@@ -2576,8 +2600,47 @@
 	      return c;
 	    };
 	
-	    Controller.find = function(controller) {
-	      return $("[" + Controller.DATA_CONTROLLER_NAME + "=\"" + controller + "\"]").getController();
+	    Controller.find = function(nameOrElement) {
+	      var controller, el, fullName, name, result,
+	        _this = this;
+	      if (typeof nameOrElement === 'string') {
+	        name = nameOrElement;
+	        fullName = require.resolve(name);
+	        if (typeof Controller.controllers[fullName] === 'undefined') {
+	          el = $("[" + Controller.DATA_CONTROLLER_FULL_NAME + "=\"" + fullName + "\"][" + Controller.DATA_LAZY_CONTROLLER_NAME + "]");
+	          if (el.length === 0) {
+	            el = $("[" + Controller.DATA_CONTROLLER_NAME + "=\"" + name + "\"][" + Controller.DATA_LAZY_CONTROLLER_NAME + "]");
+	            if (el.length > 0) {
+	              el.attr(Controller.DATA_CONTROLLER_FULL_NAME, fullName);
+	            }
+	          }
+	          if (el.length === 0) {
+	            return null;
+	          } else if (el.length === 1) {
+	            return function() {
+	              return Controller.createController(fullName, el);
+	            };
+	          } else {
+	            result = [];
+	            el.each(function(i, el) {
+	              return result.push(function() {
+	                return Controller.createController(fullName, el);
+	              });
+	            });
+	            return result;
+	          }
+	        }
+	        return Controller.controllers[fullName];
+	      } else if (nameOrElement instanceof $) {
+	        el = nameOrElement;
+	        controller = el.data(Controller.DATA_INSTANCE_NAME);
+	        if (!controller && hasAttr(el, Controller.DATA_CONTROLLER_NAME) && hasAttr(el, Controller.DATA_LAZY_CONTROLLER_NAME)) {
+	          return function() {
+	            return Controller.createController(el.attr(Controller.DATA_CONTROLLER_NAME), el);
+	          };
+	        }
+	        return controller;
+	      }
 	    };
 	
 	    return Controller;
@@ -2865,7 +2928,7 @@
 , 'dependency-injection': function(exports, module) { module.exports = window.require('dependency-injection/lib/DI.js'); }
 
 });
-require.__setStats({"spine/index.js":{"atime":1386777306000,"mtime":1359672568000,"ctime":1386673706000},"spine/lib/spine.js":{"atime":1386777306000,"mtime":1381848277000,"ctime":1386673706000},"is-mobile/index.js":{"atime":1386777306000,"mtime":1379339940000,"ctime":1386671928000},"dependency-injection/lib/DI.js":{"atime":1386835785000,"mtime":1386834781000,"ctime":1386835739000},"dependency-injection/lib/Service.js":{"atime":1386835785000,"mtime":1386834781000,"ctime":1386835739000},"dependency-injection/lib/Helpers.js":{"atime":1386835785000,"mtime":1386834781000,"ctime":1386835739000},"/test/tests/Controller.coffee":{"atime":1386840758000,"mtime":1386840753000,"ctime":1386840753000},"/test/app/controllers/Application.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/One.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/Three.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/Two.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Fifth.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/First.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Fourth.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Lazy.coffee":{"atime":1386777221000,"mtime":1386668497000,"ctime":1386668497000},"/test/app/controllers/Second.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Third.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/lib/Controller.js":{"atime":1386840590000,"mtime":1386840575000,"ctime":1386840575000},"/package.json":{"atime":1386838709000,"mtime":1386838707000,"ctime":1386838707000},"spine/package.json":{"atime":1386777306000,"mtime":1386673706000,"ctime":1386673706000},"is-mobile/package.json":{"atime":1386777306000,"mtime":1386671928000,"ctime":1386671928000},"dependency-injection/package.json":{"atime":1386835785000,"mtime":1386835739000,"ctime":1386835739000}});
+require.__setStats({"spine/index.js":{"atime":1386777306000,"mtime":1359672568000,"ctime":1386673706000},"spine/lib/spine.js":{"atime":1386777306000,"mtime":1381848277000,"ctime":1386673706000},"is-mobile/index.js":{"atime":1386777306000,"mtime":1379339940000,"ctime":1386671928000},"dependency-injection/lib/DI.js":{"atime":1386835785000,"mtime":1386834781000,"ctime":1386835739000},"dependency-injection/lib/Service.js":{"atime":1386835785000,"mtime":1386834781000,"ctime":1386835739000},"dependency-injection/lib/Helpers.js":{"atime":1386835785000,"mtime":1386834781000,"ctime":1386835739000},"/test/tests/Controller.coffee":{"atime":1386849793000,"mtime":1386843844000,"ctime":1386843844000},"/test/app/controllers/Application.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/One.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/Three.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/Two.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Fifth.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/First.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Fourth.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Lazy.coffee":{"atime":1386777221000,"mtime":1386668497000,"ctime":1386668497000},"/test/app/controllers/Second.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Third.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/lib/Controller.js":{"atime":1386849897000,"mtime":1386849887000,"ctime":1386849887000},"/package.json":{"atime":1386838709000,"mtime":1386838707000,"ctime":1386838707000},"spine/package.json":{"atime":1386777306000,"mtime":1386673706000,"ctime":1386673706000},"is-mobile/package.json":{"atime":1386777306000,"mtime":1386671928000,"ctime":1386671928000},"dependency-injection/package.json":{"atime":1386835785000,"mtime":1386835739000,"ctime":1386835739000}});
 require.version = '5.5.1';
 
 /** run section **/
