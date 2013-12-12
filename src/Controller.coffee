@@ -80,6 +80,27 @@ class Controller extends Spine.Controller
 		if scope != false then @refresh(scope)
 
 
+	@release: ->
+		for name, controller in Controller.controllers
+			if name == '__unknown__'
+				for c, i in controller
+					c._unbind()
+
+			else
+				controller._unbind()
+
+		Controller.controllers =
+			__unknown__: []
+
+		delete $.fn.getController
+
+		$ = null
+		num = 0
+
+		Controller.di = null
+
+
+
 	getAllEvents: ->
 		events = if @events then @events else {}
 		context = @
@@ -108,6 +129,14 @@ class Controller extends Spine.Controller
 				@el.unbind(info.event)
 			else
 				@el.undelegate(info.selector, info.event)
+
+
+	_unbind: ->
+		@unbind()
+		@stopListening()
+		@unbindUiEvents()
+
+		@el.data(Controller.DATA_INSTANCE_NAME, null)
 
 
 	@findElementsWithController: (scope = 'html', self = true) ->
@@ -149,12 +178,7 @@ class Controller extends Spine.Controller
 	@unbind: (scope = 'html', self = true) ->
 		for el in Controller.findElementsWithController(scope, self)
 			controller = el.data(Controller.DATA_INSTANCE_NAME)
-
-			controller.unbind()
-			controller.stopListening()
-			controller.unbindUiEvents()
-
-			el.data(Controller.DATA_INSTANCE_NAME, null)
+			controller._unbind()
 
 
 	# deprecated
