@@ -20,10 +20,15 @@ describe 'Controller', ->
 	describe '#createController()', ->
 		it 'should create controller for element', ->
 			c = Controller.createController('/test/app/controllers/First', $('#test div:first'))
+			name = '/test/app/controllers/First'
+			fullName = name + '.coffee'
 			expect(c).to.be.an.instanceof(First)
-			expect(c.el.attr(Controller.DATA_CONTROLLER_NAME)).to.be.equal('/test/app/controllers/First')
-			expect(c.el.attr(Controller.DATA_CONTROLLER_FULL_NAME)).to.be.equal('/test/app/controllers/First.coffee')
-			expect(c.fullName).to.be.equal('/test/app/controllers/First.coffee')
+			expect(c.el.attr(Controller.DATA_CONTROLLER_NAME)).to.be.equal(name)
+			expect(c.el.attr(Controller.DATA_CONTROLLER_FULL_NAME)).to.be.equal(fullName)
+			expect(c.fullName).to.be.equal(fullName)
+			expect(Controller.controllers).to.contain.keys([fullName])
+			expect(Controller.controllers[fullName]).to.be.equal(c)
+			expect(Controller.controllers.__unknown__).to.be.empty
 
 		it 'should create controller with constructor for element', ->
 			c = Controller.createController('/test/app/controllers/Second', $('#test div:last'))

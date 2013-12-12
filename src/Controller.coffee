@@ -33,7 +33,8 @@ class Controller extends Spine.Controller
 	@di: null
 
 
-	@controllers: {}
+	@controllers:
+		__unknown__: []
 
 
 	id: null
@@ -48,6 +49,8 @@ class Controller extends Spine.Controller
 
 		if @el && hasAttr(@el, Controller.DATA_CONTROLLER_FULL_NAME)
 			@fullName = @el.attr(Controller.DATA_CONTROLLER_FULL_NAME)
+		else
+			Controller.controllers.__unknown__.push(@)
 
 		@id = @el.attr('id')
 		@el.data(Controller.DATA_INSTANCE_NAME, @)
@@ -171,6 +174,12 @@ class Controller extends Spine.Controller
 			c = new c(el)
 		else
 			c = Controller.di.createInstance(c, [el])
+
+		if typeof Controller.controllers[name] != 'undefined'
+			Controller.controllers[name] = [Controller.controllers[name]]
+			Controller.controllers[name].push(c)
+		else
+			Controller.controllers[name] = c
 
 		return c
 
