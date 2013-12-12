@@ -1,4 +1,5 @@
 Controller = require 'extended-spine/Controller'
+DI = require 'dependency-injection'
 
 First = require '/test/app/controllers/First'
 Second = require '/test/app/controllers/Second'
@@ -19,7 +20,7 @@ describe 'Controller', ->
 			expect(Controller.findElementsWithController('#test').length).to.be.equal(2)
 
 		it 'should find controllers elements in html', ->
-			expect(Controller.findElementsWithController().length).to.be.equal(5)
+			expect(Controller.findElementsWithController().length).to.be.equal(6)
 
 		it 'should find controllers elements in test element except container', ->
 			expect(Controller.findElementsWithController('#test3', false).length).to.be.equal(1)
@@ -52,6 +53,16 @@ describe 'Controller', ->
 			c = Controller.createController('/test/app/controllers/Second', $('#test div:last'))
 			expect(c).to.be.an.instanceof(Second)
 			expect(c.el.attr(Controller.DATA_CONTROLLER_NAME)).to.be.equal('/test/app/controllers/Second')
+
+		it 'should create controller with autowired services', ->
+			di = new DI
+			di.addService('myArray', ['hello', 'word']).setInstantiate(false)
+
+			Controller.release()
+			Controller.init($, false, di)
+
+			c = Controller.createController('/test/app/controllers/Autowired', $('#autowired'))
+			expect(c.myArray).to.be.eql(['hello', 'word'])
 
 	describe '#refresh()', ->
 		it 'should register all controllers in application div', ->

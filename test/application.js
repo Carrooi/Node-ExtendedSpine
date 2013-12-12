@@ -1826,9 +1826,11 @@
 
 	/** code **/
 	(function() {
-	  var Controller, First, Second;
+	  var Controller, DI, First, Second;
 	
 	  Controller = require('extended-spine/Controller');
+	
+	  DI = require('dependency-injection');
 	
 	  First = require('/test/app/controllers/First');
 	
@@ -1846,7 +1848,7 @@
 	        return expect(Controller.findElementsWithController('#test').length).to.be.equal(2);
 	      });
 	      it('should find controllers elements in html', function() {
-	        return expect(Controller.findElementsWithController().length).to.be.equal(5);
+	        return expect(Controller.findElementsWithController().length).to.be.equal(6);
 	      });
 	      return it('should find controllers elements in test element except container', function() {
 	        return expect(Controller.findElementsWithController('#test3', false).length).to.be.equal(1);
@@ -1879,11 +1881,20 @@
 	        expect(c.el.attr(Controller.DATA_CONTROLLER_NAME)).to.be.equal('/test/app/controllers/First');
 	        return expect(c.el.attr('id')).to.have.string('_controller');
 	      });
-	      return it('should create controller with constructor for element', function() {
+	      it('should create controller with constructor for element', function() {
 	        var c;
 	        c = Controller.createController('/test/app/controllers/Second', $('#test div:last'));
 	        expect(c).to.be.an["instanceof"](Second);
 	        return expect(c.el.attr(Controller.DATA_CONTROLLER_NAME)).to.be.equal('/test/app/controllers/Second');
+	      });
+	      return it('should create controller with autowired services', function() {
+	        var c, di;
+	        di = new DI;
+	        di.addService('myArray', ['hello', 'word']).setInstantiate(false);
+	        Controller.release();
+	        Controller.init($, false, di);
+	        c = Controller.createController('/test/app/controllers/Autowired', $('#autowired'));
+	        return expect(c.myArray).to.be.eql(['hello', 'word']);
 	      });
 	    });
 	    describe('#refresh()', function() {
@@ -1974,6 +1985,43 @@
 	  })(Controller);
 	
 	  module.exports = Application;
+	
+	}).call(this);
+	
+
+}, '/test/app/controllers/Autowired.coffee': function(exports, module) {
+
+	/** node globals **/
+	var require = function(name) {return window.require(name, '/test/app/controllers/Autowired.coffee');};
+	require.resolve = function(name, parent) {if (parent === null) {parent = '/test/app/controllers/Autowired.coffee';} return window.require.resolve(name, parent);};
+	require.define = function(bundle) {window.require.define(bundle);};
+	require.cache = window.require.cache;
+	var __filename = '/test/app/controllers/Autowired.coffee';
+	var __dirname = '/test/app/controllers';
+	var process = {cwd: function() {return '/';}, argv: ['node', '/test/app/controllers/Autowired.coffee'], env: {}};
+
+	/** code **/
+	(function() {
+	  var Autowired, Controller,
+	    __hasProp = {}.hasOwnProperty,
+	    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+	
+	  Controller = require('extended-spine/Controller');
+	
+	  Autowired = (function(_super) {
+	    __extends(Autowired, _super);
+	
+	    function Autowired(el, myArray) {
+	      this.el = el;
+	      this.myArray = myArray;
+	      Autowired.__super__.constructor.apply(this, arguments);
+	    }
+	
+	    return Autowired;
+	
+	  })(Controller);
+	
+	  module.exports = Autowired;
 	
 	}).call(this);
 	
@@ -2952,7 +3000,7 @@
 , 'dependency-injection': function(exports, module) { module.exports = window.require('dependency-injection/lib/DI.js'); }
 
 });
-require.__setStats({"spine/index.js":{"atime":1386777306000,"mtime":1359672568000,"ctime":1386673706000},"spine/lib/spine.js":{"atime":1386777306000,"mtime":1381848277000,"ctime":1386673706000},"is-mobile/index.js":{"atime":1386777306000,"mtime":1379339940000,"ctime":1386671928000},"dependency-injection/lib/DI.js":{"atime":1386835785000,"mtime":1386834781000,"ctime":1386835739000},"dependency-injection/lib/Service.js":{"atime":1386835785000,"mtime":1386834781000,"ctime":1386835739000},"dependency-injection/lib/Helpers.js":{"atime":1386835785000,"mtime":1386834781000,"ctime":1386835739000},"/test/tests/Controller.coffee":{"atime":1386851106000,"mtime":1386851104000,"ctime":1386851104000},"/test/app/controllers/Application.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/One.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/Three.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/Two.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Fifth.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/First.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Fourth.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Lazy.coffee":{"atime":1386777221000,"mtime":1386668497000,"ctime":1386668497000},"/test/app/controllers/Second.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Third.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/lib/Controller.js":{"atime":1386850854000,"mtime":1386850823000,"ctime":1386850823000},"/package.json":{"atime":1386838709000,"mtime":1386838707000,"ctime":1386838707000},"spine/package.json":{"atime":1386777306000,"mtime":1386673706000,"ctime":1386673706000},"is-mobile/package.json":{"atime":1386777306000,"mtime":1386671928000,"ctime":1386671928000},"dependency-injection/package.json":{"atime":1386835785000,"mtime":1386835739000,"ctime":1386835739000}});
+require.__setStats({"spine/index.js":{"atime":1386777306000,"mtime":1359672568000,"ctime":1386673706000},"spine/lib/spine.js":{"atime":1386777306000,"mtime":1381848277000,"ctime":1386673706000},"is-mobile/index.js":{"atime":1386777306000,"mtime":1379339940000,"ctime":1386671928000},"dependency-injection/lib/DI.js":{"atime":1386835785000,"mtime":1386834781000,"ctime":1386835739000},"dependency-injection/lib/Service.js":{"atime":1386835785000,"mtime":1386834781000,"ctime":1386835739000},"dependency-injection/lib/Helpers.js":{"atime":1386835785000,"mtime":1386834781000,"ctime":1386835739000},"/test/tests/Controller.coffee":{"atime":1386851488000,"mtime":1386851486000,"ctime":1386851486000},"/test/app/controllers/Application.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Autowired.coffee":{"atime":1386851456000,"mtime":1386851432000,"ctime":1386851432000},"/test/app/controllers/Events/One.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/Three.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/Two.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Fifth.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/First.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Fourth.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Lazy.coffee":{"atime":1386777221000,"mtime":1386668497000,"ctime":1386668497000},"/test/app/controllers/Second.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Third.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/lib/Controller.js":{"atime":1386850854000,"mtime":1386850823000,"ctime":1386850823000},"/package.json":{"atime":1386838709000,"mtime":1386838707000,"ctime":1386838707000},"spine/package.json":{"atime":1386777306000,"mtime":1386673706000,"ctime":1386673706000},"is-mobile/package.json":{"atime":1386777306000,"mtime":1386671928000,"ctime":1386671928000},"dependency-injection/package.json":{"atime":1386835785000,"mtime":1386835739000,"ctime":1386835739000}});
 require.version = '5.5.1';
 
 /** run section **/
