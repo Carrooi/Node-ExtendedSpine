@@ -2366,6 +2366,8 @@
 	
 	    Controller.prototype.id = null;
 	
+	    Controller.prototype.fullName = null;
+	
 	    function Controller(el) {
 	      if (el == null) {
 	        el = null;
@@ -2536,13 +2538,18 @@
 	    };
 	
 	    Controller.createController = function(name, el) {
-	      var controller;
+	      var c;
+	      console.log(name);
+	      name = require.resolve(name);
+	      console.log(name);
+	      c = require(name);
 	      if (Controller.di === null) {
-	        return new (require(name))(el);
+	        c = new c(el);
 	      } else {
-	        controller = require(name);
-	        return Controller.di.createInstance(controller, [el]);
+	        c = Controller.di.createInstance(c, [el]);
 	      }
+	      c.fullName = name;
+	      return c;
 	    };
 	
 	    Controller.find = function(controller) {
@@ -2834,7 +2841,7 @@
 , 'dependency-injection': function(exports, module) { module.exports = window.require('dependency-injection/lib/DI.js'); }
 
 });
-require.__setStats({"spine/index.js":{"atime":1386777306000,"mtime":1359672568000,"ctime":1386673706000},"spine/lib/spine.js":{"atime":1386777306000,"mtime":1381848277000,"ctime":1386673706000},"is-mobile/index.js":{"atime":1386777306000,"mtime":1379339940000,"ctime":1386671928000},"dependency-injection/lib/DI.js":{"atime":1386835785000,"mtime":1386834781000,"ctime":1386835739000},"dependency-injection/lib/Service.js":{"atime":1386835785000,"mtime":1386834781000,"ctime":1386835739000},"dependency-injection/lib/Helpers.js":{"atime":1386835785000,"mtime":1386834781000,"ctime":1386835739000},"/test/tests/Controller.coffee":{"atime":1386834419000,"mtime":1386834414000,"ctime":1386834414000},"/test/app/controllers/Application.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/One.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/Three.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/Two.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Fifth.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/First.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Fourth.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Lazy.coffee":{"atime":1386777221000,"mtime":1386668497000,"ctime":1386668497000},"/test/app/controllers/Second.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Third.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/lib/Controller.js":{"atime":1386838705000,"mtime":1386838695000,"ctime":1386838695000},"/package.json":{"atime":1386838709000,"mtime":1386838707000,"ctime":1386838707000},"spine/package.json":{"atime":1386777306000,"mtime":1386673706000,"ctime":1386673706000},"is-mobile/package.json":{"atime":1386777306000,"mtime":1386671928000,"ctime":1386671928000},"dependency-injection/package.json":{"atime":1386835785000,"mtime":1386835739000,"ctime":1386835739000}});
+require.__setStats({"spine/index.js":{"atime":1386777306000,"mtime":1359672568000,"ctime":1386673706000},"spine/lib/spine.js":{"atime":1386777306000,"mtime":1381848277000,"ctime":1386673706000},"is-mobile/index.js":{"atime":1386777306000,"mtime":1379339940000,"ctime":1386671928000},"dependency-injection/lib/DI.js":{"atime":1386835785000,"mtime":1386834781000,"ctime":1386835739000},"dependency-injection/lib/Service.js":{"atime":1386835785000,"mtime":1386834781000,"ctime":1386835739000},"dependency-injection/lib/Helpers.js":{"atime":1386835785000,"mtime":1386834781000,"ctime":1386835739000},"/test/tests/Controller.coffee":{"atime":1386834419000,"mtime":1386834414000,"ctime":1386834414000},"/test/app/controllers/Application.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/One.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/Three.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/Two.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Fifth.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/First.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Fourth.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Lazy.coffee":{"atime":1386777221000,"mtime":1386668497000,"ctime":1386668497000},"/test/app/controllers/Second.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Third.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/lib/Controller.js":{"atime":1386839137000,"mtime":1386839134000,"ctime":1386839134000},"/package.json":{"atime":1386838709000,"mtime":1386838707000,"ctime":1386838707000},"spine/package.json":{"atime":1386777306000,"mtime":1386673706000,"ctime":1386673706000},"is-mobile/package.json":{"atime":1386777306000,"mtime":1386671928000,"ctime":1386671928000},"dependency-injection/package.json":{"atime":1386835785000,"mtime":1386835739000,"ctime":1386835739000}});
 require.version = '5.5.1';
 
 /** run section **/

@@ -33,6 +33,8 @@ class Controller extends Spine.Controller
 
 	id: null
 
+	fullName: null
+
 
 	constructor: (el = null) ->
 		if !@el && el instanceof $ then @el = el
@@ -151,11 +153,17 @@ class Controller extends Spine.Controller
 
 
 	@createController: (name, el) ->
+		name = require.resolve(name)
+		c = require(name)
+
 		if Controller.di == null
-			return new (require(name))(el)
+			c = new c(el)
 		else
-			controller = require(name)
-			return Controller.di.createInstance(controller, [el])
+			c = Controller.di.createInstance(c, [el])
+
+		c.fullName = name
+
+		return c
 
 
 	@find: (controller) ->
