@@ -62,9 +62,14 @@ class Controller extends Spine.Controller
 		defaultScope = "[#{Controller.DATA_APPLICATION_SCOPE_NAME}]:first"
 		defaultDi = null
 
-		if args[0] instanceof DI
+		if args.length == 0
+			scope = defaultScope
+			di = defaultDi
+
+		else if args[0] instanceof DI
 			di = args[0]
 			scope = defaultScope
+
 		else if typeof args[0] in ['string', 'boolean']
 			di = if typeof args[1] == 'undefined' then defaultDi else args[1]
 			scope = args[0]

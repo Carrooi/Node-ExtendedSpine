@@ -174,6 +174,9 @@ $ npm test
 
 ## Changelog
 
+* 1.3.1
+	+ Bug in `init` method
+
 * 1.3.0
 	+ Refactoring
 	+ Added dependency injection (package [extended-spine-di](https://github.com/sakren/node-extended-spine-di) will be removed)
