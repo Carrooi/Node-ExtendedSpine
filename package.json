@@ -24,7 +24,7 @@
 	"dependencies": {
 		"spine": "1.2.2",
 		"is-mobile": "0.2.2",
-		"dependency-injection": "1.8.0"
+		"dependency-injection": "2.0.1"
 	},
 	"devDependencies": {
 		"chai": "1.8.1",
