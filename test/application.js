@@ -1416,20 +1416,28 @@
 	  DI = (function() {
 	    DI.prototype.services = null;
 	
+	    DI.prototype.paths = null;
+	
 	    DI.prototype.reserved = ['di'];
 	
 	    DI.prototype.creating = null;
+	
+	    DI.prototype.basePath = null;
 	
 	    function DI() {
 	      var di;
 	      di = new Service(this, 'di', this);
 	      di.instantiate = false;
-	      di.injectMethods = false;
 	      this.services = {
 	        di: di
 	      };
+	      this.paths = {};
 	      this.creating = [];
 	    }
+	
+	    DI.prototype.getPath = function(name) {
+	      return (this.basePath === null ? '' : this.basePath + '/') + name;
+	    };
 	
 	    DI.prototype.addService = function(name, service, args) {
 	      if (args == null) {
@@ -1437,6 +1445,10 @@
 	      }
 	      if (__indexOf.call(this.reserved, name) >= 0) {
 	        throw new Error("DI: name '" + name + "' is reserved by DI.");
+	      }
+	      if (typeof service === 'string') {
+	        service = require.resolve(this.getPath(service));
+	        this.paths[service] = name;
 	      }
 	      this.services[name] = new Service(this, name, service, args);
 	      return this.services[name];
@@ -1450,29 +1462,18 @@
 	      return Helpers.autowireArguments(method, args, this);
 	    };
 	
-	    DI.prototype.createInstance = function(service, args, instantiate, injectMethods) {
-	      var method;
+	    DI.prototype.createInstance = function(service, args, instantiate) {
 	      if (args == null) {
 	        args = [];
 	      }
 	      if (instantiate == null) {
 	        instantiate = true;
 	      }
-	      if (injectMethods == null) {
-	        injectMethods = true;
-	      }
 	      if (instantiate === true) {
 	        if (Object.prototype.toString.call(service.prototype.constructor) === '[Function]') {
 	          service = this.inject(service, {}, args);
 	        } else {
 	          service = Helpers.createInstance(service, args, this);
-	        }
-	      }
-	      if (Object.prototype.toString.call(service) === '[object Object]' && injectMethods) {
-	        for (method in service) {
-	          if (method.match(/^inject/) !== null) {
-	            this.inject(service[method], service);
-	          }
 	        }
 	      }
 	      return service;
@@ -1513,6 +1514,36 @@
 	    DI.prototype.getByName = function(name) {
 	      Helpers.log('DI: Method getByName is deprecated, use get method.');
 	      return this.get(name);
+	    };
+	
+	    DI.prototype.getByPath = function(path) {
+	      var e, error;
+	      error = false;
+	      try {
+	        path = require.resolve(this.getPath(path));
+	      } catch (_error) {
+	        e = _error;
+	        error = true;
+	      }
+	      if (typeof this.paths[path] !== 'undefined' && !error) {
+	        return this.get(this.paths[path]);
+	      }
+	      return null;
+	    };
+	
+	    DI.prototype.getFactoryByPath = function(path) {
+	      var e, error;
+	      error = false;
+	      try {
+	        path = require.resolve(this.getPath(path));
+	      } catch (_error) {
+	        e = _error;
+	        error = true;
+	      }
+	      if (typeof this.paths[path] !== 'undefined' && !error) {
+	        return this.getFactory(this.paths[path]);
+	      }
+	      return null;
 	    };
 	
 	    DI.prototype.get = function(name) {
@@ -1570,8 +1601,6 @@
 	
 	    Service.prototype.autowired = true;
 	
-	    Service.prototype.injectMethods = true;
-	
 	    Service.prototype.setup = null;
 	
 	    Service.prototype.instance = null;
@@ -1604,7 +1633,7 @@
 	        service = require(service);
 	      }
 	      try {
-	        service = this.di.createInstance(service, this["arguments"], this.instantiate, this.injectMethods);
+	        service = this.di.createInstance(service, this["arguments"], this.instantiate);
 	        _ref = this.setup;
 	        for (method in _ref) {
 	          args = _ref[method];
@@ -1746,16 +1775,41 @@
 	    };
 	
 	    Helpers.getArguments = function(method) {
-	      var args;
-	      method = method.toString();
-	      method = method.replace(/((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg, '');
+	      var args, e;
+	      try {
+	        method = method.toString();
+	      } catch (_error) {
+	        e = _error;
+	        throw new Error('Can not call toString on method');
+	      }
 	      args = method.slice(method.indexOf('(') + 1, method.indexOf(')')).match(/([^\s,]+)/g);
 	      args = args === null ? [] : args;
 	      return args;
 	    };
 	
+	    Helpers.getHintArguments = function(method) {
+	      var arg, args, body, e, i, _i, _len;
+	      try {
+	        method = method.toString();
+	      } catch (_error) {
+	        e = _error;
+	        throw new Error('Can not call toString on method');
+	      }
+	      body = method.slice(method.indexOf("{") + 1, method.lastIndexOf("}"));
+	      args = body.match(/{\s*['"]@di:inject['"]\s*:\s*\[(.+)\]\s*}/);
+	      if (args !== null) {
+	        args = args[1].split(',');
+	        for (i = _i = 0, _len = args.length; _i < _len; i = ++_i) {
+	          arg = args[i];
+	          args[i] = arg.replace(/^\s*['"]/, '').replace(/['"]$/, '');
+	        }
+	        return args;
+	      }
+	      return null;
+	    };
+	
 	    Helpers.autowireArguments = function(method, args, container) {
-	      var dots, factory, parameter, previousDots, result, service, _i, _len, _ref;
+	      var dots, factory, hints, i, originalArgs, parameter, previousDots, result, service, _i, _len, _ref;
 	      if (args == null) {
 	        args = [];
 	      }
@@ -1764,17 +1818,25 @@
 	      dots = false;
 	      previousDots = false;
 	      args = Helpers.clone(args);
+	      originalArgs = args;
+	      hints = Helpers.getHintArguments(method);
+	      if (hints !== null) {
+	        args = Helpers.clone(hints);
+	      }
 	      _ref = Helpers.getArguments(method);
-	      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-	        parameter = _ref[_i];
+	      for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
+	        parameter = _ref[i];
+	        if (args[0] === '...' && hints !== null) {
+	          args[0] = originalArgs[i];
+	        }
 	        if (typeof args[0] !== 'undefined' && args[0] === '...') {
 	          dots = true;
 	        }
-	        if (parameter.match(/Factory$/) !== null) {
-	          parameter = parameter.substring(0, parameter.length - 7);
-	          factory = true;
-	        }
 	        if (typeof args[0] === 'undefined' || dots || (container.hasDefinition(parameter) && previousDots)) {
+	          if (parameter.match(/Factory$/) !== null) {
+	            parameter = parameter.substring(0, parameter.length - 7);
+	            factory = true;
+	          }
 	          service = container.findDefinitionByName(parameter);
 	          if (service.autowired === false) {
 	            throw new Error("DI: Service '" + parameter + "' in not autowired.");
@@ -1789,9 +1851,24 @@
 	          }
 	          previousDots = true;
 	        } else {
+	          if (args[0] !== null && typeof args[0] === 'string' && args[0].match(/^factory:/) !== null) {
+	            args[0] = args[0].substr(8);
+	            factory = true;
+	          }
 	          if (args[0] !== null && typeof args[0] === 'string' && args[0].match(/^@/) !== null) {
 	            args[0] = args[0].substr(1);
-	            result.push(container.get(args[0]));
+	            if (factory) {
+	              result.push(container.getFactory(args[0]));
+	            } else {
+	              result.push(container.get(args[0]));
+	            }
+	          } else if (args[0] !== null && typeof args[0] === 'string' && args[0].match(/^\$/) !== null) {
+	            args[0] = args[0].substr(1);
+	            if (factory) {
+	              result.push(container.getFactoryByPath(args[0]));
+	            } else {
+	              result.push(container.getByPath(args[0]));
+	            }
 	          } else {
 	            result.push(args[0]);
 	          }
@@ -2772,7 +2849,7 @@
 			"phantomjs": "1.9.2-5"
 		},
 		"scripts": {
-			"test": "npm run test-build; mocha-phantomjs -p ./node_modules/phantomjs/bin/phantomjs ./test/index.html",
+			"test": "mocha-phantomjs -p ./node_modules/phantomjs/bin/phantomjs ./test/index.html",
 			"test-build": "cd ./test; simq build;"
 		}
 	}
@@ -2942,7 +3019,7 @@
 	return {
 	  "name": "dependency-injection",
 	  "description": "Dependency injection with configuration and autowire for node js and browser",
-	  "version": "1.8.0",
+	  "version": "2.0.1",
 	  "author": {
 	    "name": "David Kudera",
 	    "email": "sakren@gmail.com"
@@ -2977,18 +3054,18 @@
 	    "test-node": "mocha ./test/node/index.js --reporter spec",
 	    "test-browser": "mocha-phantomjs ./test/browser/index.html"
 	  },
-	  "readme": "[![NPM version](https://badge.fury.io/js/dependency-injection.png)](http://badge.fury.io/js/dependency-injection)\n[![Dependency Status](https://gemnasium.com/sakren/node-dependency-injection.png)](https://gemnasium.com/sakren/node-dependency-injection)\n[![Build Status](https://travis-ci.org/sakren/node-dependency-injection.png?branch=master)](https://travis-ci.org/sakren/node-dependency-injection)\n\n# Dependency injection\n\nDependency injection with configuration and autowire for node js and browser (for example in combination with [simq](https://npmjs.org/package/simq)).\n\nImagine, that you have got some classes which are used very often. You have got two options: add instance of these classes\nto window object or to any other object, or create new instance every time when you want to use them.\n\nThe problem is that first solution add some \"mess\" to the window object and the other one is even more problematic. What\nif you will want to change for example constructor of this class (it's arguments) or call some methods right after class\nis instanced? Than you will have to change these setups at every place.\n\nBut with this package, you can configure your classes at one place and then let's just \"ask\" for them. (not service locator).\n\nThis package is inspired by dependency injection in [Nette framework](http://doc.nette.org/en/dependency-injection).\n\n## Installation\n\n```\n$ npm install dependency-injection\n```\n\n## Configuration\n\nYou can see full documentation of easy-configuration [here](https://npmjs.org/package/easy-configuration). This package\nis used for configuration your services (classes).\n\n```\n{\n\t\"services\": {\n\t\t\"application\": {\n    \t\t\"service\": \"/path/to/my/application/module\",\n    \t\t\"arguments\": [\"./www\", \"someOtherVariable\"],\n    \t\t\"setup\": {\n    \t\t\t\"setApplicationName\": [\"nameOfApplication\"],\n    \t\t\t\"setSomethingOther\": [\"someUselessVariable\", \"andAnotherOne\"]\n    \t\t}\n    \t}\n\t}\n}\n```\n\nThere we set some application service with some arguments which will be given to constructor and some setup. Every time\nyou will need this service, it will have got these arguments and all setup function will be called.\n\nSection service is path for module require (common js).\n\nDI automatically look into values from setup in your module (service). If it is function, then it will be called, otherwise\nargument will be passed into this object property.\n\n## Usage\n\n```\nvar DIConfigurator = require('dependency-injection/DIConfigurator');\nvar configurator = new DIConfigurator('/path/to/your/configuration/file.json');\n\nvar di = configurator.create();\n```\n\nThis will create new instance of DI class which holding all your services.\n\nIn example below, you can see how to get your services.\n\n```\ndi.get('application');\ndi.create('application');\ndi.getFactory('application');\n```\n\n## Auto exposing into window\n\nDI can be automatically exposed into window object (when on browser). Default name for this object is `di`.\n\n```\n{\n\t\"setup\": {\n\t\t\"windowExpose\": true\n\t}\n}\n```\n\nCustom name:\n\n```\n{\n\t\"setup\": {\n\t\t\"windowExpose\": \"configurator\"\n\t}\n}\n```\n\n### get\n\nSome services may be \"singleton\" type (not really singleton but with one instance in whole application), which application\nservice is clearly is.\n\nThis method will create one instance of service and store it. Every other time, this instance will be returned.\n\n### create\n\nMethod create will just create new instance of service and will not store it.\n\n### getFactory\n\ngetFactory is almost the same like create method, but will return anonymous function, so if you then want to use it,\nyou have to call it.\n\n```\nvar application = di.getFactory('application');\napplication = application();\t\t// just call it\n```\n\n## Not instantiate services\n\nWhen you want for example use jQuery as service, you will not want to automatically call something like `new jquery`.\nSo you can tell DI, that this service will not be instantiate.\n\n```\n{\n\t\"services\": {\n\t\t\"jquery\": {\n\t\t\t\"service\": \"jquery\"\n\t\t\t\"instantiate\": false\n\t\t}\n\t}\n}\n```\n\n## Auto run services\n\nWhen you are using configuration with json files, you can set some services to be started automatically after calling\nthe `create` method.\n\n```\n{\n\t\"services\": {\n\t\t\"setup\": {\n\t\t\t\"service\": \"./path/to/setup\",\n\t\t\t\"run\": true\n\t\t}\n\t}\n}\n```\n\n## Autowiring\n\nAccessing some DI object is not so pretty like we want, so there is some nice way how to avoid it. You can let DI to \"inject\"\nall your services to other. For example if your application service needs translator service, just let DI to give it to\napplication.\n\nAll you need to do is add parameter \"translator\" to constructor of your application service. This name must be same like\nname of service in your configuration. DI then automatically give it translator service.\n\nThe same thing is also for methods. You don't have to configure them, just set name of needed service in method's arguments\nand DI will give you these services.\n\nThis is quite similar to dependency injection in [angular](http://angularjs.org/).\n\nNow in most cases you just have to use `get` method just once for create instance of your base application service\nand other services will be automatically injected.\n\nPlease, try to avoid circular dependencies (service A depends on service B and service B depends on service A).\n\n## Examples\n\nIn your configuration, you can use three dots as replacement for services.\n\nServices:\n```\nvar serviceA = function(serviceB, serviceC) { ... };\nvar serviceB = function(serviceC, namespace, item) { ... };\nvar serviceC = function(namespace, item, serviceD) { ... };\nvar serviceD = function() { ... };\n```\n\nConfiguration:\n```\n{\n\t\"services\": {\n\t\t\"serviceA\": {\n\t\t\t\"service\": \"path/to/service/A\",\n\t\t\t\"instantiate\": false\n\t\t},\n\t\t\"serviceB\": {\n\t\t\t\"service\": \"path/to/service/B\",\n\t\t\t\"arguments\": [\"...\", \"some namespace\", \"some item\"],\n\t\t\t\"instantiate\": false\n\t\t},\n\t\t\"serviceC\": {\n\t\t\t\"service\": \"path/to/service/C\",\n\t\t\t\"arguments\": [\"some namespace\", \"some item\"],\n\t\t\t\"instantiate\": false\n\t\t},\n\t\t\"serviceD\": {\n\t\t\t\"service\": \"path/to/service/D\",\n\t\t\t\"instantiate\": false\n\t\t}\n\t}\n}\n```\n\nor more expanded:\n```\n{\n\t\"services\": {\n\t\t\"serviceA\": {\n\t\t\t\"service\": \"path/to/service/A\",\n\t\t\t\"arguments\": [\"...\"],\n\t\t\t\"instantiate\": false\n\t\t},\n\t\t\"serviceB\": {\n\t\t\t\"service\": \"path/to/service/B\",\n\t\t\t\"arguments\": [\"...\", \"some namespace\", \"some item\"],\n\t\t\t\"instantiate\": false\n\t\t},\n\t\t\"serviceC\": {\n\t\t\t\"service\": \"path/to/service/C\",\n\t\t\t\"arguments\": [\"some namespace\", \"some item\", \"...\"],\n\t\t\t\"instantiate\": false\n\t\t},\n\t\t\"serviceD\": {\n\t\t\t\"service\": \"path/to/service/D\",\n\t\t\t\"arguments\": [\"...\"],\n\t\t\t\"instantiate\": false\n\t\t}\n\t}\n}\n```\n\n### Disable autowiring\n\nIf you want to disable autowiring for some service, you can set \"autowired\" option to false in your config (like instantiate).\n\nWhen you will try to autowire this service, DI will throw an error.\n\n```\n{\n\t\"services\": {\n\t\t\"setup\": {\n\t\t\t\"someName\": \"./path/to/this/service\",\n\t\t\t\"autowired\": false\n\t\t}\n\t}\n}\n```\n\n## Autowire factories\n\nYou can also let DI to autowire factories. For example if you want to get factory for translator, you will add \"Factory\"\nto the end of translator.\n\n```\nMyClass.prototype.setTranslator = function(translatorFactory) {\n\tvar translator = translatorFactory();\t\t\t// now do something with translator\n};\n```\n\n## Links to other services\n\nWhen you have got for example foreign library registered as service in this DI and want to autowire some other service into\nit, you have to use their names of methods arguments.\n\nAnother possibility is to set these services in your config.\n\n```\n{\n\t\"services\": {\n\t\t\"foreignLibrary\": {\n\t\t\t\"service\": \"path/to/service\",\n\t\t\t\"arguments\": [\n\t\t\t\t\"@translator\"\n\t\t\t]\n\t\t}\n\t}\n}\n```\n\nNow this `foreignLibrary` will gets your `translator` service in constructor.\n\n## Autowiring DI\n\nAutowiring DI container is also possible. Only thing you need to do, is set argument with name \"di\" into your method or\nconstructor. This also means that you can not register new service with name \"di\".\n\n```\ndi.get('di');\n```\n\n## Inject methods\n\nIf your services using multiple inheritance and you want to inject some other services but it's parent need some different\nservices, then it is quite uncomfortable to set your services via constructor.\n\nIf DI find some methods with \"inject\" word in the beginning, it will automatically call and autowire these methods.\n\n## Without configuration\n\nMaybe it will be better for someone to use this DI without configuration, so here is example of application, translator\nand jquery definition.\n\n```\nvar DI = require('dependency-injection');\nvar di = new DI;\n\ndi.addService('application', require('./path/to/my/application/module'), ['./www', 'someOtherVariable'])\n\t.addSetup('setApplicationName', ['nameOfApplication'])\n\t.addSetup('setSomethingOther', ['someUselessVariable', 'andAnotherOne']);\n\ndi.addService('translator', require('./path/to/translator'))\n\t.addSetup('setLanguage', ['en']);\n\ndi.addService('jquery', 'jquery')\n\t.setInstantiate(false);\n\ndi.addService('private', '/my/private/service')\n\t.setAutowired(false);\n```\n\nInstead of path to service (second parameter in addService method) you can also use string with path, but this path will be\nthen relative to class of DI!\n\n## Create instance\n\nIf you have got some other object which you want to use with other services, but can not use configuration or DI for this,\nyou can use `createInstance` method and DI will create new instance of your object with dependencies defined in constructor\nor with inject methods.\n\n```\nvar SuperClass = require('./mySuperClass');\nvar super = di.createInstance(SuperClass, ['and some argument']);\n```\n\n## Inject method\n\nFor simple injecting services into your functions, you can use method `inject`.\n\n```\ndi.inject(function(application) {\n\tapplication.doSomeMagic();\n});\n```\n\n## Tests\n\n```\n$ npm test\n```\n\n## Changelog\n\n* 1.8.0\n\t+ Better tests (mocha does not need to be installed globally)\n\t+ Updated dependencies\n\t+ Added badges\n\t+ Added to travis\n\n* 1.7.3\n\t+ Bug with no-string arguments\n\n* 1.7.2\n\t+ Bug with functions as services\n\n* 1.7.1\n\t+ Potential bug in IE\n\n* 1.7.0\n\t+ Updated dependencies\n\t+ Added `injectMethods` to services\n\t+ Refactored autowiring\n\t+ Some optimizations\n\t+ `DI.autowireArguments` moved to `Helpers.autowireArguments`\n\t+ Throwing an error if circular reference is found\n\n* 1.6.6 - 1.6.7\n\t+ Bugs in Internet Explorer 8\n\n* 1.6.2 - 1.6.5\n\t+ Some optimizations\n\t+ Should assert module replaced with chai\n\t+ Better error messages\n\n* 1.6.1\n\t+ Bug with setting other arguments than strings\n\n* 1.6.0\n\t+ Added `get` method, `getByName` is now deprecated\n\t+ Added `inject` method\n\t+ Autowiring with @\n\n* 1.5.2\n\t+ Add setup into properties\n\n* 1.4.1\n\t+ Bug\n\n* 1.4.0\n\t+ Option for exposing di into\n\n* 1.3.2 - 1.3.3\n\t+ Bug with run option\n\n* 1.3.1\n\t+ Just some mistake in readme\n\n* 1.3.0\n\t+ Added auto run option into configuration\n\t+ Really huge mistake in readme\n\n* 1.2.3\n\t+ Autowiring parameters even if they are not in function definition\n\n* 1.2.2\n\t+ Added missing test\n\n* 1.2.1\n\t+ Added ability to inject DI container itself\n\n* 1.2.0\n\t+ Added DI.createInstance method\n\t+ DI.addService accepts also objects\n\t+ Typos in README\n\t+ Optimizations\n\t+ Added mocha tests\n\t+ Added setInstantiate method\n\t+ Added autowired option\n\n* 1.1.1\n\t+ inject methods are called before custom setup\n\n* 1.1.0\n\t+ Support for not-instantiate services\n\n* 1.0.1\n\t+ Added information about autowiring factories\n\n* 1.0.0\n\t+ Initial version",
+	  "readme": "[![NPM version](https://badge.fury.io/js/dependency-injection.png)](http://badge.fury.io/js/dependency-injection)\n[![Dependency Status](https://gemnasium.com/sakren/node-dependency-injection.png)](https://gemnasium.com/sakren/node-dependency-injection)\n[![Build Status](https://travis-ci.org/sakren/node-dependency-injection.png?branch=master)](https://travis-ci.org/sakren/node-dependency-injection)\n\n# Dependency injection\n\nDependency injection with configuration and autowire for node js and browser (for example in combination with [simq](https://npmjs.org/package/simq)).\n\nImagine, that you have got some classes which are used very often. You have got two options: add instance of these classes\nto window object or to any other object, or create new instance every time when you want to use them.\n\nThe problem is that first solution add some \"mess\" to the window object and the other one is even more problematic. What\nif you will want to change for example constructor of this class (it's arguments) or call some methods right after class\nis instanced? Than you will have to change these setups at every place.\n\nBut with this package, you can configure your classes at one place and then let's just \"ask\" for them. (not service locator).\n\nThis package is inspired by dependency injection in [Nette framework](http://doc.nette.org/en/dependency-injection).\n\n## Installation\n\n```\n$ npm install dependency-injection\n```\n\n## Configuration\n\nYou can see full documentation of easy-configuration [here](https://npmjs.org/package/easy-configuration). This package\nis used for configuration your services (classes).\n\n```\n{\n\t\"services\": {\n\t\t\"application\": {\n    \t\t\"service\": \"path/to/my/application/module\",\n    \t\t\"arguments\": [\"./www\", \"someOtherVariable\"],\n    \t\t\"setup\": {\n    \t\t\t\"setApplicationName\": [\"nameOfApplication\"],\n    \t\t\t\"setSomethingOther\": [\"someUselessVariable\", \"andAnotherOne\"]\n    \t\t}\n    \t}\n\t}\n}\n```\n\nThere we set some application service with some arguments which will be given to constructor and some setup. Every time\nyou will need this service, it will have got these arguments and all setup function will be called.\n\nSection service is path for module require (common js).\n\nDI automatically look into values from setup in your module (service). If it is function, then it will be called, otherwise\nargument will be passed into this object property.\n\n## Usage\n\n```\nvar DIConfigurator = require('dependency-injection/DIConfigurator');\nvar configurator = new DIConfigurator('/path/to/your/configuration/file.json');\n\nvar di = configurator.create();\ndi.basePath = __dirname;\n```\n\nThis will create new instance of DI class which holding all your services.\n\nYou have to also set the basePath property. DI will prepend this basePath to all services' paths from your configuration.\nSo it should be path to root directory of your application.\n\nIn example below, you can see how to get your services.\n\n```\ndi.get('application');\ndi.create('application');\ndi.getFactory('application');\n```\n\n## Auto exposing into global\n\nDI can be automatically exposed into window object (when on browser) or into global object (in node). Default name for\nthis object is `di`.\n\n```\n{\n\t\"setup\": {\n\t\t\"expose\": true\n\t}\n}\n```\n\nCustom name:\n\n```\n{\n\t\"setup\": {\n\t\t\"expose\": \"secondDI\"\n\t}\n}\n```\n\n### get\n\nSome services may be \"singleton\" type (not really singleton but with one instance in whole application), which application\nservice is clearly is.\n\nThis method will create one instance of service and store it. Every other time, this instance will be returned.\n\n### getByPath\n\nSame as `get` method, but this accepts path to node module (like in your service configuration)\n\n### create\n\nMethod create will just create new instance of service and will not store it.\n\n### getFactory\n\ngetFactory is almost the same like create method, but will return anonymous function, so if you then want to use it,\nyou have to call it.\n\n```\nvar application = di.getFactory('application');\napplication = application();\t\t// just call it\n```\n\n## Not instantiate services\n\nWhen you want for example use jQuery as service, you will not want to automatically call something like `new jquery`.\nSo you can tell DI, that this service will not be instantiate.\n\n```\n{\n\t\"services\": {\n\t\t\"jquery\": {\n\t\t\t\"service\": \"jquery\"\n\t\t\t\"instantiate\": false\n\t\t}\n\t}\n}\n```\n\n## Auto run services\n\nWhen you are using configuration with json files, you can set some services to be started automatically after calling\nthe `create` method.\n\n```\n{\n\t\"services\": {\n\t\t\"setup\": {\n\t\t\t\"service\": \"./path/to/setup\",\n\t\t\t\"run\": true\n\t\t}\n\t}\n}\n```\n\n## Autowiring\n\nAccessing some DI object is not so pretty like we want, so there is some nice way how to avoid it. You can let DI to \"inject\"\nall your services to other. For example if your application service needs translator service, just let DI to give it to\napplication.\n\nAll you need to do is add parameter \"translator\" to constructor of your application service. This name must be same like\nname of service in your configuration. DI then automatically give it translator service.\n\nThe same thing is also for methods. You don't have to configure them, just set name of needed service in method's arguments\nand DI will give you these services.\n\nThis is quite similar to dependency injection in [angular](http://angularjs.org/).\n\nNow in most cases you just have to use `get` method just once for create instance of your base application service\nand other services will be automatically injected.\n\nPlease, try to avoid circular dependencies (service A depends on service B and service B depends on service A).\n\n## Examples\n\nIn your configuration, you can use three dots as replacement for services.\n\nServices:\n```\nvar serviceA = function(serviceB, serviceC) { ... };\nvar serviceB = function(serviceC, namespace, item) { ... };\nvar serviceC = function(namespace, item, serviceD) { ... };\nvar serviceD = function() { ... };\n```\n\nConfiguration:\n```\n{\n\t\"services\": {\n\t\t\"serviceA\": {\n\t\t\t\"service\": \"path/to/service/A\",\n\t\t\t\"instantiate\": false\n\t\t},\n\t\t\"serviceB\": {\n\t\t\t\"service\": \"path/to/service/B\",\n\t\t\t\"arguments\": [\"...\", \"some namespace\", \"some item\"],\n\t\t\t\"instantiate\": false\n\t\t},\n\t\t\"serviceC\": {\n\t\t\t\"service\": \"path/to/service/C\",\n\t\t\t\"arguments\": [\"some namespace\", \"some item\"],\n\t\t\t\"instantiate\": false\n\t\t},\n\t\t\"serviceD\": {\n\t\t\t\"service\": \"path/to/service/D\",\n\t\t\t\"instantiate\": false\n\t\t}\n\t}\n}\n```\n\nor more expanded:\n```\n{\n\t\"services\": {\n\t\t\"serviceA\": {\n\t\t\t\"service\": \"path/to/service/A\",\n\t\t\t\"arguments\": [\"...\"],\n\t\t\t\"instantiate\": false\n\t\t},\n\t\t\"serviceB\": {\n\t\t\t\"service\": \"path/to/service/B\",\n\t\t\t\"arguments\": [\"...\", \"some namespace\", \"some item\"],\n\t\t\t\"instantiate\": false\n\t\t},\n\t\t\"serviceC\": {\n\t\t\t\"service\": \"path/to/service/C\",\n\t\t\t\"arguments\": [\"some namespace\", \"some item\", \"...\"],\n\t\t\t\"instantiate\": false\n\t\t},\n\t\t\"serviceD\": {\n\t\t\t\"service\": \"path/to/service/D\",\n\t\t\t\"arguments\": [\"...\"],\n\t\t\t\"instantiate\": false\n\t\t}\n\t}\n}\n```\n\nOnly problem is with minified javascript files which changes variable names. Solution for this is write some kind of hint\nfor DI container.\n\n```\nvar someFunction = function(otherNameForApplicationService) {\n\t{'@di:inject': ['@application']};\t\t\t// services' names are prepended with '@'\n\n\totherNameForApplicationService.run();\t\t// this will call method run on service application\n};\n```\n\nor you can also include services by their full paths:\n```\nvar someFunction = function(otherNameForApplicationService) {\n\t{'@di:inject': ['$path/to/application/service']};\t\t// services' paths are prepended with '$'\n\n\totherNameForApplicationService.run();\n};\n```\n\nor if you need factory:\n```\nvar someFunction = function(otherNameForApplicationService) {\n\t{'@di:inject': ['factory:$path/to/application/service']};\t\t// can also be name of service: \"factory:@application\"\n\n\totherNameForApplicationService.run();\n};\n```\n\n### Disable autowiring\n\nIf you want to disable autowiring for some service, you can set \"autowired\" option to false in your config (like instantiate).\n\nWhen you will try to autowire this service, DI will throw an error.\n\n```\n{\n\t\"services\": {\n\t\t\"setup\": {\n\t\t\t\"someName\": \"./path/to/this/service\",\n\t\t\t\"autowired\": false\n\t\t}\n\t}\n}\n```\n\n## Autowire factories\n\nYou can also let DI to autowire factories. For example if you want to get factory for translator, you will add \"Factory\"\nto the end of translator.\n\n```\nMyClass.prototype.setTranslator = function(translatorFactory) {\n\tvar translator = translatorFactory();\t\t\t// now do something with translator\n};\n```\n\n## Links to other services\n\nWhen you have got for example foreign library registered as service in this DI and want to autowire some other service into\nit, you have to use their names of methods arguments.\n\nAnother possibility is to set these services in your config.\n\n```\n{\n\t\"services\": {\n\t\t\"foreignLibrary\": {\n\t\t\t\"service\": \"path/to/service\",\n\t\t\t\"arguments\": [\n\t\t\t\t\"@translator\"\n\t\t\t]\n\t\t}\n\t}\n}\n```\n\nor with full module path:\n```\n{\n\t\"services\": {\n\t\t\"foreignLibrary\": {\n\t\t\t\"service\": \"path/to/service\",\n\t\t\t\"arguments\": [\n\t\t\t\t\"$path/to/translator/module\"\n\t\t\t]\n\t\t}\n\t}\n}\n```\n\nNow this `foreignLibrary` will gets your `translator` service in constructor.\n\n## Autowiring DI\n\nAutowiring DI container is also possible. Only thing you need to do, is set argument with name \"di\" into your method or\nconstructor. This also means that you can not register new service with name \"di\".\n\n```\ndi.get('di');\n```\n\n## Without configuration\n\nMaybe it will be better for someone to use this DI without configuration, so here is example of application, translator\nand jquery definition.\n\n```\nvar DI = require('dependency-injection');\nvar di = new DI;\n\ndi.addService('application', require('./path/to/my/application/module'), ['./www', 'someOtherVariable'])\n\t.addSetup('setApplicationName', ['nameOfApplication'])\n\t.addSetup('setSomethingOther', ['someUselessVariable', 'andAnotherOne']);\n\ndi.addService('translator', require('./path/to/translator'))\n\t.addSetup('setLanguage', ['en']);\n\ndi.addService('jquery', 'jquery')\n\t.setInstantiate(false);\n\ndi.addService('private', 'my/private/service')\n\t.setAutowired(false);\n```\n\nInstead of path to service (second parameter in addService method) you can also use string with path, but this path will be\nthen relative to class of DI!\n\n## Create instance\n\nIf you have got some other object which you want to use with other services, but can not use configuration or DI for this,\nyou can use `createInstance` method and DI will create new instance of your object with dependencies defined in constructor.\n\n```\nvar SuperClass = require('./mySuperClass');\nvar super = di.createInstance(SuperClass, ['and some argument']);\n```\n\n## Inject method\n\nFor simple injecting services into your functions, you can use method `inject`.\n\n```\ndi.inject(function(application) {\n\tapplication.doSomeMagic();\n});\n```\n\n## Tests\n\n```\n$ npm test\n```\n\n## Changelog\n\n* 2.0.1\n\t+ Injecting by arguments and hints was not working\n\n* 2.0.0\n\t+ Removed autowiring into `inject` methods (BC break!)\n\t+ Added methods `getByPath` and `getFactoryByPath`\n\t+ Added basePath option\n\t+ Better docs\n\t+ Added hints for autowiring\n\n* 1.8.0\n\t+ Better tests (mocha does not need to be installed globally)\n\t+ Updated dependencies\n\t+ Added badges\n\t+ Added to travis\n\n* 1.7.3\n\t+ Bug with no-string arguments\n\n* 1.7.2\n\t+ Bug with functions as services\n\n* 1.7.1\n\t+ Potential bug in IE\n\n* 1.7.0\n\t+ Updated dependencies\n\t+ Added `injectMethods` to services\n\t+ Refactored autowiring\n\t+ Some optimizations\n\t+ `DI.autowireArguments` moved to `Helpers.autowireArguments`\n\t+ Throwing an error if circular reference is found\n\n* 1.6.6 - 1.6.7\n\t+ Bugs in Internet Explorer 8\n\n* 1.6.2 - 1.6.5\n\t+ Some optimizations\n\t+ Should assert module replaced with chai\n\t+ Better error messages\n\n* 1.6.1\n\t+ Bug with setting other arguments than strings\n\n* 1.6.0\n\t+ Added `get` method, `getByName` is now deprecated\n\t+ Added `inject` method\n\t+ Autowiring with @\n\n* 1.5.2\n\t+ Add setup into properties\n\n* 1.4.1\n\t+ Bug\n\n* 1.4.0\n\t+ Option for exposing di into\n\n* 1.3.2 - 1.3.3\n\t+ Bug with run option\n\n* 1.3.1\n\t+ Just some mistake in readme\n\n* 1.3.0\n\t+ Added auto run option into configuration\n\t+ Really huge mistake in readme\n\n* 1.2.3\n\t+ Autowiring parameters even if they are not in function definition\n\n* 1.2.2\n\t+ Added missing test\n\n* 1.2.1\n\t+ Added ability to inject DI container itself\n\n* 1.2.0\n\t+ Added DI.createInstance method\n\t+ DI.addService accepts also objects\n\t+ Typos in README\n\t+ Optimizations\n\t+ Added mocha tests\n\t+ Added setInstantiate method\n\t+ Added autowired option\n\n* 1.1.1\n\t+ inject methods are called before custom setup\n\n* 1.1.0\n\t+ Support for not-instantiate services\n\n* 1.0.1\n\t+ Added information about autowiring factories\n\n* 1.0.0\n\t+ Initial version",
 	  "readmeFilename": "README.md",
 	  "bugs": {
 	    "url": "https://github.com/sakren/node-dependency-injection/issues"
 	  },
 	  "homepage": "https://github.com/sakren/node-dependency-injection",
-	  "_id": "dependency-injection@1.8.0",
+	  "_id": "dependency-injection@2.0.1",
 	  "dist": {
-	    "shasum": "f6c693c876f8b26f7ff532ce86f3e9d47111c786"
+	    "shasum": "c7ef18fbff946a161db6a25e6e1285d1c8417802"
 	  },
-	  "_from": "dependency-injection@1.8.0",
-	  "_resolved": "https://registry.npmjs.org/dependency-injection/-/dependency-injection-1.8.0.tgz"
+	  "_from": "dependency-injection@2.0.1",
+	  "_resolved": "https://registry.npmjs.org/dependency-injection/-/dependency-injection-2.0.1.tgz"
 	}
 	
 	}).call(this);
@@ -3000,7 +3077,7 @@
 , 'dependency-injection': function(exports, module) { module.exports = window.require('dependency-injection/lib/DI.js'); }
 
 });
-require.__setStats({"spine/index.js":{"atime":1386777306000,"mtime":1359672568000,"ctime":1386673706000},"spine/lib/spine.js":{"atime":1386777306000,"mtime":1381848277000,"ctime":1386673706000},"is-mobile/index.js":{"atime":1386777306000,"mtime":1379339940000,"ctime":1386671928000},"dependency-injection/lib/DI.js":{"atime":1386835785000,"mtime":1386834781000,"ctime":1386835739000},"dependency-injection/lib/Service.js":{"atime":1386835785000,"mtime":1386834781000,"ctime":1386835739000},"dependency-injection/lib/Helpers.js":{"atime":1386835785000,"mtime":1386834781000,"ctime":1386835739000},"/test/tests/Controller.coffee":{"atime":1386851488000,"mtime":1386851486000,"ctime":1386851486000},"/test/app/controllers/Application.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Autowired.coffee":{"atime":1386851456000,"mtime":1386851432000,"ctime":1386851432000},"/test/app/controllers/Events/One.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/Three.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/Two.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Fifth.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/First.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Fourth.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Lazy.coffee":{"atime":1386777221000,"mtime":1386668497000,"ctime":1386668497000},"/test/app/controllers/Second.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Third.coffee":{"atime":1386777306000,"mtime":1386664096000,"ctime":1386664096000},"/lib/Controller.js":{"atime":1386850854000,"mtime":1386850823000,"ctime":1386850823000},"/package.json":{"atime":1386838709000,"mtime":1386838707000,"ctime":1386838707000},"spine/package.json":{"atime":1386777306000,"mtime":1386673706000,"ctime":1386673706000},"is-mobile/package.json":{"atime":1386777306000,"mtime":1386671928000,"ctime":1386671928000},"dependency-injection/package.json":{"atime":1386835785000,"mtime":1386835739000,"ctime":1386835739000}});
+require.__setStats({"spine/index.js":{"atime":1386936775000,"mtime":1359672568000,"ctime":1386673706000},"spine/lib/spine.js":{"atime":1386936775000,"mtime":1381848277000,"ctime":1386673706000},"is-mobile/index.js":{"atime":1386936775000,"mtime":1379339940000,"ctime":1386671928000},"dependency-injection/lib/DI.js":{"atime":1386939533000,"mtime":1386938648000,"ctime":1386939526000},"dependency-injection/lib/Service.js":{"atime":1386939533000,"mtime":1386938648000,"ctime":1386939526000},"dependency-injection/lib/Helpers.js":{"atime":1386939533000,"mtime":1386939049000,"ctime":1386939526000},"/test/tests/Controller.coffee":{"atime":1386945749000,"mtime":1386945748000,"ctime":1386945748000},"/test/app/controllers/Application.coffee":{"atime":1386936775000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Autowired.coffee":{"atime":1386937914000,"mtime":1386851432000,"ctime":1386851432000},"/test/app/controllers/Events/One.coffee":{"atime":1386936775000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/Three.coffee":{"atime":1386936775000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Events/Two.coffee":{"atime":1386936775000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Fifth.coffee":{"atime":1386936775000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/First.coffee":{"atime":1386936775000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Fourth.coffee":{"atime":1386936775000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Lazy.coffee":{"atime":1386936775000,"mtime":1386668497000,"ctime":1386668497000},"/test/app/controllers/Second.coffee":{"atime":1386936775000,"mtime":1386664096000,"ctime":1386664096000},"/test/app/controllers/Third.coffee":{"atime":1386936775000,"mtime":1386664096000,"ctime":1386664096000},"/lib/Controller.js":{"atime":1386945749000,"mtime":1386945748000,"ctime":1386945748000},"/package.json":{"atime":1386945815000,"mtime":1386945806000,"ctime":1386945806000},"spine/package.json":{"atime":1386936775000,"mtime":1386673706000,"ctime":1386673706000},"is-mobile/package.json":{"atime":1386936775000,"mtime":1386671928000,"ctime":1386671928000},"dependency-injection/package.json":{"atime":1386939533000,"mtime":1386939526000,"ctime":1386939526000}});
 require.version = '5.5.1';
 
 /** run section **/

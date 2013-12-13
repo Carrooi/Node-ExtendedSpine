@@ -33,7 +33,7 @@
 		"phantomjs": "1.9.2-5"
 	},
 	"scripts": {
-		"test": "npm run test-build; mocha-phantomjs -p ./node_modules/phantomjs/bin/phantomjs ./test/index.html",
+		"test": "mocha-phantomjs -p ./node_modules/phantomjs/bin/phantomjs ./test/index.html",
 		"test-build": "cd ./test; simq build;"
 	}
 }
