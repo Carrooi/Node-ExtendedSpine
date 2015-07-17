@@ -1,6 +1,6 @@
 [![NPM version](https://img.shields.io/npm/v/extended-spine.svg?style=flat-square)](http://badge.fury.io/js/extended-spine)
 [![Dependency Status](https://img.shields.io/gemnasium/Carrooi/Node-ExtendedSpine.svg?style=flat-square)](https://gemnasium.com/Carrooi/Node-ExtendedSpine)
-[![Build Status](https://img.shields.io/travis/Carrooi/Carrooi/Node-ExtendedSpine.svg?style=flat-square)](https://travis-ci.org/Carrooi/Node-ExtendedSpine)
+[![Build Status](https://img.shields.io/travis/Carrooi/Node-ExtendedSpine.svg?style=flat-square)](https://travis-ci.org/Carrooi/Node-ExtendedSpine)
 
 # extended-spine
 
