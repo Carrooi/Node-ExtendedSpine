@@ -1,6 +1,6 @@
-[![NPM version](https://badge.fury.io/js/extended-spine.png)](http://badge.fury.io/js/extended-spine)
-[![Dependency Status](https://gemnasium.com/sakren/node-extended-spine.png)](https://gemnasium.com/sakren/node-extended-spine)
-[![Build Status](https://travis-ci.org/sakren/node-extended-spine.png?branch=master)](https://travis-ci.org/sakren/node-extended-spine)
+[![NPM version](https://img.shields.io/npm/v/extended-spine.svg?style=flat-square)](http://badge.fury.io/js/extended-spine)
+[![Dependency Status](https://img.shields.io/gemnasium/Carrooi/Node-ExtendedSpine.svg?style=flat-square)](https://gemnasium.com/Carrooi/Node-ExtendedSpine)
+[![Build Status](https://img.shields.io/travis/Carrooi/Carrooi/Node-ExtendedSpine.svg?style=flat-square)](https://travis-ci.org/Carrooi/Node-ExtendedSpine)
 
 # extended-spine
 
@@ -8,6 +8,12 @@ Extended [spine](https://npmjs.org/package/spine) framework. It gives you abilit
 like in [Angular](http://angularjs.org/).
 
 You can use it for example with [SimQ](https://npmjs.org/package/simq).
+
+## Abandoned
+
+Unfortunately I don't have any more time to maintain this repository :-( 
+
+![sad cat](https://raw.githubusercontent.com/sakren/sakren.github.io/master/images/sad-kitten.jpg)
 
 ## Installation
 
@@ -173,6 +179,10 @@ $ npm test
 ```
 
 ## Changelog
+
+* 1.3.2
+	+ Move under Carrooi organization
+	+ Abandon package
 
 * 1.3.1
 	+ Bug in `init` method

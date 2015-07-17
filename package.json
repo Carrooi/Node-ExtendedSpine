@@ -1,10 +1,10 @@
 {
 	"name": "extended-spine",
-	"description": "Some extensions for spine framework",
-	"version": "1.3.1",
+	"description": "[ABANDONED] Some extensions for spine framework",
+	"version": "1.3.2",
 	"author": {
 		"name": "David Kudera",
-		"email": "sakren@gmail.com"
+		"email": "kudera.d@gmail.com"
 	},
 	"keywords": [
 		"spine",
@@ -15,7 +15,7 @@
 	],
 	"repository": {
 		"type": "git",
-		"url": "git@github.com:sakren/node-extended-spine.git"
+		"url": "git@github.com:Carrooi/Node-ExtendedSpine.git"
 	},
 	"license": "MIT",
 	"engines": {
@@ -37,3 +37,4 @@
 		"test-build": "cd ./test; simq build;"
 	}
 }
+
